@@ -8,7 +8,6 @@ import type { ItemDescriptionInput } from "@/ai/flows/item-description-suggestio
 import type { DocumentData } from "./types";
 import { db, adminDb } from "./firebase";
 import { ref, get, push, remove, set } from "firebase/database";
-import { runTransaction } from "firebase/database";
 
 export async function fetchSmartSuggestionsAction(input: SmartSuggestionInput) {
   try {
@@ -52,7 +51,7 @@ export async function getDocuments(): Promise<DocumentData[]> {
 
 async function getNextDocId(docType: 'quote' | 'estimation'): Promise<string> {
     if (!adminDb) {
-      throw new Error("Firebase Admin SDK not initialized. Please set FIREBASE_SERVICE_ACCOUNT_KEY in .env");
+      throw new Error("Firebase Admin SDK not configured on the server. Please check your FIREBASE_SERVICE_ACCOUNT_KEY in .env");
     }
     const counterRef = adminDb.ref(`counters/${docType}`);
     
@@ -75,9 +74,6 @@ async function getNextDocId(docType: 'quote' | 'estimation'): Promise<string> {
 
 export async function saveDocument(document: Omit<DocumentData, 'id' | 'createdAt' | 'docId'>): Promise<{ success: boolean; error?: string }> {
   try {
-    if (!adminDb) {
-        return { success: false, error: "Firebase Admin SDK not configured on the server. Please check your FIREBASE_SERVICE_ACCOUNT_KEY." };
-    }
     const docId = await getNextDocId(document.docType);
     
     const newDocument = {

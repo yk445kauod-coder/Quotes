@@ -32,11 +32,14 @@ try {
             });
         }
         adminDb = admin.database();
-    } else {
+    } else if (process.env.NODE_ENV !== 'development') {
+        // Log a warning only if not in development, as it might be expected during local dev without a key.
         console.warn("FIREBASE_SERVICE_ACCOUNT_KEY is not set. Server-side admin features will be disabled.");
     }
 } catch (error) {
     console.error('Firebase Admin Initialization Error:', error);
+    // Setting adminDb to undefined here ensures that checks for it will fail.
+    adminDb = undefined;
 }
 
 export { adminDb };
