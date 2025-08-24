@@ -6,8 +6,8 @@ import type { SmartSuggestionInput } from "@/ai/flows/smart-suggestion-tool";
 import { getItemDescriptionSuggestion } from "@/ai/flows/item-description-suggestion-flow";
 import type { ItemDescriptionInput } from "@/ai/flows/item-description-suggestion-flow";
 import type { DocumentData } from "./types";
-import { db } from "./firebase";
-import { collection, getDocs, addDoc, deleteDoc, doc, query, orderBy, getDoc } from "firebase/firestore";
+import { db, adminDb } from "./firebase";
+import { ref, get, push, remove, set, runTransaction } from "firebase/database";
 
 export async function fetchSmartSuggestionsAction(input: SmartSuggestionInput) {
   try {
@@ -33,11 +33,16 @@ export async function fetchItemDescriptionSuggestionAction(input: ItemDescriptio
 
 export async function getDocuments(): Promise<DocumentData[]> {
   try {
-    const documentsCol = collection(db, "documents");
-    const q = query(documentsCol, orderBy("createdAt", "desc"));
-    const documentSnapshot = await getDocs(q);
-    const documentList = documentSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as DocumentData));
-    return documentList;
+    const documentsRef = ref(db, "documents");
+    const snapshot = await get(documentsRef);
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      const documentList = Object.keys(data)
+        .map(key => ({ ...data[key], id: key } as DocumentData))
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      return documentList;
+    }
+    return [];
   } catch (error) {
      console.error("Error fetching documents:", error);
      return [];
@@ -45,19 +50,18 @@ export async function getDocuments(): Promise<DocumentData[]> {
 }
 
 async function getNextDocId(docType: 'quote' | 'estimation'): Promise<string> {
-    const counterRef = doc(db, 'counters', docType);
-    const counterSnap = await getDoc(counterRef);
-    let newCount = 1;
-    if (counterSnap.exists()) {
-        newCount = counterSnap.data().count + 1;
+    if (!adminDb) {
+      throw new Error("Firebase Admin SDK not initialized. Please set FIREBASE_SERVICE_ACCOUNT_KEY in .env.local");
     }
-    
-    // This should be in a transaction in a real app
-    // await runTransaction(db, async (transaction) => { ... });
-    // For now, we'll just update it.
-    const { setDoc } = await import("firebase/firestore");
-    await setDoc(counterRef, { count: newCount });
+    const counterRef = adminDb.ref(`counters/${docType}`);
+    const result = await runTransaction(counterRef, (currentData) => {
+        if (currentData === null) {
+            return { count: 1 };
+        }
+        return { count: currentData.count + 1 };
+    });
 
+    const newCount = result.snapshot.val().count;
     const prefix = docType === 'quote' ? 'Q' : 'E';
     return `${prefix}-${new Date().getFullYear()}-${String(newCount).padStart(3, '0')}`;
 }
@@ -73,7 +77,9 @@ export async function saveDocument(document: Omit<DocumentData, 'id' | 'createdA
       createdAt: new Date().toISOString(),
     };
 
-    await addDoc(collection(db, "documents"), newDocument);
+    const documentsRef = ref(db, "documents");
+    const newDocRef = push(documentsRef);
+    await set(newDocRef, newDocument);
     
     revalidatePath("/");
     revalidatePath("/create");
@@ -90,7 +96,8 @@ export async function deleteDocument(id: string): Promise<{ success: boolean; er
     if (!id) {
         throw new Error("Document ID is required.");
     }
-    await deleteDoc(doc(db, "documents", id));
+    const documentRef = ref(db, `documents/${id}`);
+    await remove(documentRef);
     revalidatePath("/");
     return { success: true };
   } catch (error)

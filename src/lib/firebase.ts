@@ -1,22 +1,21 @@
 // Import the functions you need from the SDKs you need
-import { initializeApp, getApps } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+import { initializeApp, getApps, getApp } from "firebase/app";
+import { getDatabase } from "firebase/database";
+import admin from 'firebase-admin';
 
 // Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID",
-  measurementId: "YOUR_MEASUREMENT_ID"
+  apiKey: "AIzaSyCGL0qAiIp9LiT6jO-Tsvz6v5efBJErFcc",
+  authDomain: "maher-project.firebaseapp.com",
+  databaseURL: "https://maher-project-default-rtdb.firebaseio.com",
+  projectId: "maher-project",
+  storageBucket: "maher-project.appspot.com",
+  messagingSenderId: "266963974491",
+  appId: "1:266963974491:web:ebe7c920ca34bdbcea027e"
 };
 
-// Initialize Firebase
+
+// Initialize Firebase client SDK
 let app;
 if (!getApps().length) {
   app = initializeApp(firebaseConfig);
@@ -24,4 +23,20 @@ if (!getApps().length) {
   app = getApps()[0];
 }
 
-export const db = getFirestore(app);
+export const db = getDatabase(app);
+
+// Initialize Firebase Admin SDK
+const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_KEY ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY) : undefined;
+
+if (serviceAccount && !admin.apps.length) {
+  try {
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+      databaseURL: firebaseConfig.databaseURL,
+    });
+  } catch (error) {
+    console.error('Firebase Admin Initialization Error', error);
+  }
+}
+
+export const adminDb = admin.apps.length ? admin.database() : undefined;
