@@ -10,10 +10,25 @@ import {
 } from "@/components/ui/card";
 import { getDocuments } from "@/lib/actions";
 import { DocumentList } from "@/components/document-list";
+import { Suspense } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
-export default async function DashboardPage() {
+async function Documents() {
   const documents = await getDocuments();
+  return <DocumentList initialDocuments={documents} />;
+}
 
+function DocumentsSkeleton() {
+  return (
+    <div className="space-y-2">
+      <Skeleton className="h-10 w-full" />
+      <Skeleton className="h-10 w-full" />
+      <Skeleton className="h-10 w-full" />
+    </div>
+  )
+}
+
+export default function DashboardPage() {
   return (
     <div className="container mx-auto flex-1 space-y-4 p-4 sm:p-8 pt-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">
@@ -38,7 +53,10 @@ export default async function DashboardPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <DocumentList initialDocuments={documents} />
+          <Suspense fallback={<DocumentsSkeleton />}>
+            {/* @ts-expect-error Async Server Component */}
+            <Documents />
+          </Suspense>
         </CardContent>
       </Card>
     </div>

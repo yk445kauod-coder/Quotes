@@ -18,12 +18,13 @@ interface DocumentPreviewProps {
     terms?: string;
     paymentMethod?: string;
   };
+  isForPdf?: boolean;
 }
 
 const headerImageUrl = "https://ik.imagekit.io/fpbwa3np7/%D8%A8%D8%B1%D9%86%D8%A7%D9%85%D8%AC%20%D8%B9%D8%B1%D9%88%D8%B6%20%D8%A7%D9%84%D8%A7%D8%B3%D8%B9%D8%A7%D8%B1/header%20-%20Copy.png?updatedAt=1755348570527";
 const footerText = "المصرية للمقاولات الكهروميكانيكية\nالبحيرة، كفر الدوار، طريق اسكندرية القاهرة الزراعي، كيلو 35\n0452139565 / 01117744552 / 01044760706";
 
-export function DocumentPreview({ formData }: DocumentPreviewProps) {
+export function DocumentPreview({ formData, isForPdf = false }: DocumentPreviewProps) {
   const {
     docType = "quote",
     clientName = "اسم الجهة",
@@ -41,6 +42,10 @@ export function DocumentPreview({ formData }: DocumentPreviewProps) {
   const total = subTotal + taxAmount;
   const docTypeName = docType === 'quote' ? 'عرض سعر' : 'مقايسة';
   const today = new Date().toLocaleDateString('ar-EG-u-nu-latn', { year: 'numeric', month: '2-digit', day: '2-digit' });
+  
+  // Filter out empty items for PDF generation
+  const validItems = items.filter(item => item.description && item.unit && item.quantity && item.price);
+  const itemsToRender = isForPdf ? validItems : items;
 
   return (
     <div id="document-preview" className="bg-white text-black font-body text-sm h-full overflow-auto flex flex-col">
@@ -83,7 +88,7 @@ export function DocumentPreview({ formData }: DocumentPreviewProps) {
                     </tr>
                 </thead>
                 <tbody>
-                    {items.map((item, index) => (
+                    {itemsToRender.map((item, index) => (
                         <tr key={index}>
                             <td className="border p-1 align-top">{index + 1}</td>
                             <td className="border p-1 align-top whitespace-pre-wrap">{item.description}</td>
@@ -93,8 +98,8 @@ export function DocumentPreview({ formData }: DocumentPreviewProps) {
                             <td className="border p-1 align-top">{formatCurrency((item.quantity || 0) * (item.price || 0))}</td>
                         </tr>
                     ))}
-                    {/* Add empty rows to fill the page */}
-                    {Array.from({ length: Math.max(0, 17 - items.length) }).map((_, i) => (
+                    {/* Add empty rows to fill the page for live preview only */}
+                    {!isForPdf && Array.from({ length: Math.max(0, 15 - itemsToRender.length) }).map((_, i) => (
                          <tr key={`empty-${i}`}>
                             <td className="border p-1 h-8"></td>
                             <td className="border p-1"></td>

@@ -46,7 +46,7 @@ import { formatCurrency } from "@/lib/utils";
 import type { DocumentType } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
-import html2pdf from "html2pdf.js";
+
 
 const formSchema = z.object({
   docType: z.enum(["quote", "estimation"], {
@@ -182,9 +182,19 @@ export function CreateDocumentForm() {
     }
   }
 
-  const handleExportPdf = () => {
+  const handleExportPdf = async () => {
     setIsPrinting(true);
-    const element = document.getElementById('document-preview-container');
+    
+    // Dynamically import html2pdf.js only on the client-side
+    const html2pdf = (await import('html2pdf.js')).default;
+    
+    const element = document.getElementById('document-pdf-export');
+    if (!element) {
+        toast({ variant: "destructive", title: "خطأ", description: "عنصر المعاينة غير موجود." });
+        setIsPrinting(false);
+        return;
+    }
+    
     const docId = `${form.getValues('docType')}-${form.getValues('clientName')}`.replace(/\s/g, '_');
     const opt = {
       margin: 0,
@@ -437,8 +447,15 @@ export function CreateDocumentForm() {
             <CardTitle>معاينة المستند</CardTitle>
           </CardHeader>
           <CardContent>
+             {/* This div is for the live preview on screen */}
             <div id="document-preview-container" className="w-full aspect-[1/1.414] border rounded-lg shadow-md overflow-hidden">
-                <DocumentPreview formData={watchedAll} />
+                <DocumentPreview formData={watchedAll} isForPdf={false} />
+            </div>
+             {/* This div is hidden and used only for PDF export */}
+            <div className="hidden">
+                 <div id="document-pdf-export">
+                    <DocumentPreview formData={watchedAll} isForPdf={true} />
+                 </div>
             </div>
           </CardContent>
         </Card>
