@@ -1,7 +1,7 @@
 // This file contains client-side Firebase operations
 import { db } from "./firebase";
 import { ref, get, push, remove, set, onValue, query, orderByChild, update } from "firebase/database";
-import type { DocumentData } from "./types";
+import type { DocumentData, SettingsData } from "./types";
 
 /**
  * Gets documents from Realtime Database and listens for changes.
@@ -95,4 +95,33 @@ export async function deleteDocument(id: string): Promise<void> {
   }
   const documentRef = ref(db, `documents/${id}`);
   await remove(documentRef);
+}
+
+
+// --- Settings Functions ---
+
+/**
+ * Gets the application settings from the Realtime Database.
+ * @returns The settings data or default values if not found.
+ */
+export async function getSettings(): Promise<SettingsData> {
+    const settingsRef = ref(db, 'settings');
+    const snapshot = await get(settingsRef);
+    if (snapshot.exists()) {
+        return snapshot.val();
+    }
+    // Return default values if no settings are found in the DB
+    return {
+        headerImageUrl: "https://placehold.co/700x100.png",
+        footerText: "Company Name\nAddress\nPhone & Email"
+    };
+}
+
+/**
+ * Saves the application settings to the Realtime Database.
+ * @param settings The settings data to save.
+ */
+export async function saveSettings(settings: SettingsData): Promise<void> {
+    const settingsRef = ref(db, 'settings');
+    await set(settingsRef, settings);
 }

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Sheet, FileText } from "lucide-react";
+import { Sheet, FileText, Settings } from "lucide-react";
 
 export function AppHeader() {
   return (
@@ -23,6 +23,12 @@ export function AppHeader() {
             className="transition-colors hover:text-foreground/80 text-foreground/60"
           >
             إنشاء مستند
+          </Link>
+          <Link
+            href="/settings"
+            className="transition-colors hover:text-foreground/80 text-foreground/60"
+          >
+            الإعدادات
           </Link>
         </nav>
       </div>

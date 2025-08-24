@@ -1,9 +1,13 @@
+
 "use client";
 
 import { formatCurrency } from "@/lib/utils";
 import Image from "next/image";
-import type { DocumentType } from "@/lib/types";
-import { headerImageUrl, footerText } from "@/lib/constants";
+import type { DocumentType, SettingsData } from "@/lib/types";
+import { useState, useEffect } from "react";
+import { getSettings } from "@/lib/firebase-client";
+import { Skeleton } from "./ui/skeleton";
+
 
 interface DocumentPreviewProps {
   formData: {
@@ -24,6 +28,28 @@ interface DocumentPreviewProps {
 }
 
 export function DocumentPreview({ formData, isForPdf = false }: DocumentPreviewProps) {
+  const [settings, setSettings] = useState<SettingsData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadSettings() {
+      try {
+        const fetchedSettings = await getSettings();
+        setSettings(fetchedSettings);
+      } catch (error) {
+        console.error("Failed to load settings for preview:", error);
+        // Set default settings on error
+        setSettings({
+            headerImageUrl: "https://placehold.co/700x100.png",
+            footerText: "Error loading settings"
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadSettings();
+  }, []);
+
   const {
     docId,
     docType = "quote",
@@ -47,19 +73,41 @@ export function DocumentPreview({ formData, isForPdf = false }: DocumentPreviewP
   const validItems = items.filter(item => item.description && item.unit && item.quantity);
   const itemsToRender = isForPdf ? validItems : items;
   const docIdText = docId ? docId : '[سيتم إنشاؤه عند الحفظ]';
+  
+  if (loading) {
+      return (
+          <div className="p-8 space-y-4">
+              <Skeleton className="h-[100px] w-full" />
+              <div className="flex justify-between">
+                <Skeleton className="h-4 w-1/4" />
+                <Skeleton className="h-4 w-1/4" />
+              </div>
+              <Skeleton className="h-6 w-1/2" />
+              <Skeleton className="h-40 w-full" />
+              <div className="flex justify-between">
+                <Skeleton className="h-20 w-1/2" />
+                <Skeleton className="h-20 w-1/3" />
+              </div>
+              <Skeleton className="h-10 w-full" />
+          </div>
+      )
+  }
 
   return (
     <div id="document-preview" className="bg-white text-black font-body text-sm h-full overflow-auto flex flex-col">
         <header className="w-full mb-4">
-            <Image
-                src={headerImageUrl}
-                alt="Company Header"
-                width={700}
-                height={100}
-                className="w-full h-auto object-contain"
-                data-ai-hint="company logo"
-                priority
-            />
+            {settings?.headerImageUrl && (
+                <Image
+                    src={settings.headerImageUrl}
+                    alt="Company Header"
+                    width={700}
+                    height={100}
+                    className="w-full h-auto object-contain"
+                    data-ai-hint="company logo"
+                    priority
+                    unoptimized // Important for external URLs that might not be in next.config.js
+                />
+            )}
         </header>
         
         <main className="flex-grow px-8">
@@ -148,7 +196,7 @@ export function DocumentPreview({ formData, isForPdf = false }: DocumentPreviewP
         </main>
         
         <footer className="w-full mt-auto p-4 pt-2 border-t-2 border-black text-center text-xs">
-            <p className="whitespace-pre-wrap">{footerText}</p>
+           {settings?.footerText && <p className="whitespace-pre-wrap">{settings.footerText}</p>}
         </footer>
     </div>
   );

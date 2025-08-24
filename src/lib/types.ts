@@ -21,3 +21,8 @@ export interface DocumentData {
   taxAmount: number;
   total: number;
 }
+
+export interface SettingsData {
+  headerImageUrl: string;
+  footerText: string;
+}

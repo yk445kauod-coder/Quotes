@@ -1,5 +1,6 @@
 import type { DocumentItem } from "./types";
-import { headerImageUrl } from "./constants";
+import { getSettings } from "./firebase-client";
+
 
 /**
  * Converts an array of items to a CSV string.
@@ -63,14 +64,15 @@ async function imageToBase64(url: string): Promise<string> {
 
 
 export async function exportToWord(element: HTMLElement, fileName: string) {
-    const headerImageBase64 = await imageToBase64(headerImageUrl);
+    const settings = await getSettings();
+    const headerImageBase64 = await imageToBase64(settings.headerImageUrl);
 
     let sourceHTML = element.innerHTML;
 
     // Replace the original image src with the Base64 version
     sourceHTML = sourceHTML.replace(
-      /(<img[^>]+src=")([^"]+)("[^>]*alt="Company Header"[^>]*>)/,
-      `$1${headerImageBase64}$3`
+      /<img[^>]+src="[^"]+"[^>]*>/,
+      `<img src="${headerImageBase64}" style="width:100%; height:auto;" />`
     );
     
     // Add inline styles for Word compatibility
@@ -96,7 +98,7 @@ export async function exportToWord(element: HTMLElement, fileName: string) {
 export function exportToExcel(items: DocumentItem[], fileName: string) {
     const csvContent = convertToCSV(items);
     // Add BOM for UTF-8 support in Excel
-    const bom = new Uint8A-rray([0xEF, 0xBB, 0xBF]);
+    const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
     const blob = new Blob([bom, csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
