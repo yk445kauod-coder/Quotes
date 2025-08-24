@@ -51,7 +51,7 @@ export async function getDocuments(): Promise<DocumentData[]> {
 
 async function getNextDocId(docType: 'quote' | 'estimation'): Promise<string> {
     if (!adminDb) {
-      throw new Error("Firebase Admin SDK not configured on the server. Please check your FIREBASE_SERVICE_ACCOUNT_KEY in .env");
+      throw new Error("Firebase Admin SDK not configured on the server. Please set the FIREBASE_SERVICE_ACCOUNT_KEY in your .env file to enable automatic document numbering.");
     }
     const counterRef = adminDb.ref(`counters/${docType}`);
     

@@ -44,7 +44,7 @@ export function DocumentPreview({ formData, isForPdf = false }: DocumentPreviewP
   const today = new Date().toLocaleDateString('ar-EG-u-nu-latn', { year: 'numeric', month: '2-digit', day: '2-digit' });
   
   // Filter out empty items for PDF generation
-  const validItems = items.filter(item => item.description && item.unit && item.quantity && item.price);
+  const validItems = items.filter(item => item.description && item.unit && item.quantity && item.price > 0);
   const itemsToRender = isForPdf ? validItems : items;
 
   return (
