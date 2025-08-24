@@ -80,7 +80,11 @@
     "productName": "Al-Masria E-Quotes",
     "files": [
       "out/**/*",
-      "electron/**/*"
+      "electron/**/*",
+      "src/**/*",
+      "*.js",
+      "*.json",
+      "*.ts"
     ],
     "directories": {
       "buildResources": "assets",
