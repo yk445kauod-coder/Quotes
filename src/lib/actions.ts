@@ -7,7 +7,8 @@ import { getItemDescriptionSuggestion } from "@/ai/flows/item-description-sugges
 import type { ItemDescriptionInput } from "@/ai/flows/item-description-suggestion-flow";
 import type { DocumentData } from "./types";
 import { db, adminDb } from "./firebase";
-import { ref, get, push, remove, set, runTransaction } from "firebase/database";
+import { ref, get, push, remove, set } from "firebase/database";
+import { runTransaction } from "firebase/database";
 
 export async function fetchSmartSuggestionsAction(input: SmartSuggestionInput) {
   try {
@@ -51,16 +52,21 @@ export async function getDocuments(): Promise<DocumentData[]> {
 
 async function getNextDocId(docType: 'quote' | 'estimation'): Promise<string> {
     if (!adminDb) {
-      throw new Error("Firebase Admin SDK not initialized. Please set FIREBASE_SERVICE_ACCOUNT_KEY in .env.local");
+      throw new Error("Firebase Admin SDK not initialized. Please set FIREBASE_SERVICE_ACCOUNT_KEY in .env");
     }
     const counterRef = adminDb.ref(`counters/${docType}`);
-    const result = await runTransaction(counterRef, (currentData) => {
+    
+    const result = await counterRef.transaction((currentData) => {
         if (currentData === null) {
             return { count: 1 };
         }
-        return { count: currentData.count + 1 };
+        return { count: (currentData.count || 0) + 1 };
     });
 
+    if (!result.committed) {
+        throw new Error('Failed to update document counter.');
+    }
+    
     const newCount = result.snapshot.val().count;
     const prefix = docType === 'quote' ? 'Q' : 'E';
     return `${prefix}-${new Date().getFullYear()}-${String(newCount).padStart(3, '0')}`;
@@ -69,6 +75,9 @@ async function getNextDocId(docType: 'quote' | 'estimation'): Promise<string> {
 
 export async function saveDocument(document: Omit<DocumentData, 'id' | 'createdAt' | 'docId'>): Promise<{ success: boolean; error?: string }> {
   try {
+    if (!adminDb) {
+        return { success: false, error: "Firebase Admin SDK not configured on the server. Please check your FIREBASE_SERVICE_ACCOUNT_KEY." };
+    }
     const docId = await getNextDocId(document.docType);
     
     const newDocument = {

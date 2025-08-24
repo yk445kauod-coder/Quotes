@@ -16,27 +16,27 @@ const firebaseConfig = {
 
 
 // Initialize Firebase client SDK
-let app;
-if (!getApps().length) {
-  app = initializeApp(firebaseConfig);
-} else {
-  app = getApps()[0];
-}
-
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 export const db = getDatabase(app);
 
 // Initialize Firebase Admin SDK
-const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_KEY ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY) : undefined;
-
-if (serviceAccount && !admin.apps.length) {
-  try {
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-      databaseURL: firebaseConfig.databaseURL,
-    });
-  } catch (error) {
-    console.error('Firebase Admin Initialization Error', error);
-  }
+let adminDb: admin.database.Database | undefined;
+try {
+    const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+    if (serviceAccountString) {
+        const serviceAccount = JSON.parse(serviceAccountString);
+        if (admin.apps.length === 0) {
+            admin.initializeApp({
+              credential: admin.credential.cert(serviceAccount),
+              databaseURL: firebaseConfig.databaseURL,
+            });
+        }
+        adminDb = admin.database();
+    } else {
+        console.warn("FIREBASE_SERVICE_ACCOUNT_KEY is not set. Server-side admin features will be disabled.");
+    }
+} catch (error) {
+    console.error('Firebase Admin Initialization Error:', error);
 }
 
-export const adminDb = admin.apps.length ? admin.database() : undefined;
+export { adminDb };
