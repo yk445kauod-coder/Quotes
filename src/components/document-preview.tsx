@@ -6,6 +6,7 @@ import type { DocumentType } from "@/lib/types";
 
 interface DocumentPreviewProps {
   formData: {
+    docId?: string;
     docType?: DocumentType;
     clientName?: string;
     subject?: string;
@@ -26,6 +27,7 @@ const footerText = "المصرية للمقاولات الكهروميكانيك
 
 export function DocumentPreview({ formData, isForPdf = false }: DocumentPreviewProps) {
   const {
+    docId,
     docType = "quote",
     clientName = "اسم الجهة",
     subject = "موضوع المستند",
@@ -44,8 +46,9 @@ export function DocumentPreview({ formData, isForPdf = false }: DocumentPreviewP
   const today = new Date().toLocaleDateString('ar-EG-u-nu-latn', { year: 'numeric', month: '2-digit', day: '2-digit' });
   
   // Filter out empty items for PDF generation
-  const validItems = items.filter(item => item.description && item.unit && item.quantity && item.price > 0);
+  const validItems = items.filter(item => item.description && item.unit && item.quantity);
   const itemsToRender = isForPdf ? validItems : items;
+  const docIdText = docId ? docId : '[سيتم إنشاؤه عند الحفظ]';
 
   return (
     <div id="document-preview" className="bg-white text-black font-body text-sm h-full overflow-auto flex flex-col">
@@ -68,7 +71,7 @@ export function DocumentPreview({ formData, isForPdf = false }: DocumentPreviewP
 
             <div className="flex justify-between mb-2 text-sm">
                 <span>التاريخ: {today}</span>
-                <span>{docTypeName} رقم: [سيتم إنشاؤه عند الحفظ]</span>
+                <span>{docTypeName} رقم: {docIdText}</span>
             </div>
             
             <div className="mb-2 text-sm">

@@ -1,6 +1,6 @@
 // This file contains client-side Firebase operations
 import { db } from "./firebase";
-import { ref, get, push, remove, set, onValue, query, orderByChild, limitToLast } from "firebase/database";
+import { ref, get, push, remove, set, onValue, query, orderByChild, update } from "firebase/database";
 import type { DocumentData } from "./types";
 
 /**
@@ -32,10 +32,25 @@ export function getDocuments(callback: (documents: DocumentData[]) => void): () 
 }
 
 /**
+ * Gets a single document by its ID from the Realtime Database.
+ * @param id The unique key of the document to fetch.
+ * @returns The document data or null if not found.
+ */
+export async function getDocumentById(id: string): Promise<DocumentData | null> {
+    const documentRef = ref(db, `documents/${id}`);
+    const snapshot = await get(documentRef);
+    if (snapshot.exists()) {
+        return { ...snapshot.val(), id: snapshot.key } as DocumentData;
+    }
+    return null;
+}
+
+
+/**
  * Saves a new document to the Realtime Database.
  * @param document The document data to save.
  */
-export async function saveDocument(document: Omit<DocumentData, 'id'>): Promise<void> {
+export async function saveDocument(document: Omit<DocumentData, 'id' | 'docId'>): Promise<void> {
   const documentsRef = ref(db, "documents");
   const newDocRef = push(documentsRef);
   
@@ -56,6 +71,19 @@ export async function saveDocument(document: Omit<DocumentData, 'id'>): Promise<
   // Also update the counter
   await set(counterRef, { count: newCount });
 }
+
+/**
+ * Updates an existing document in the Realtime Database.
+ * @param id The unique key of the document to update.
+ * @param document The document data to update.
+ */
+export async function updateDocument(id: string, document: DocumentData): Promise<void> {
+    const documentRef = ref(db, `documents/${id}`);
+    // Omit the 'id' field before updating, as it's the key and not part of the data object.
+    const { id: docId, ...dataToUpdate } = document;
+    await update(documentRef, dataToUpdate);
+}
+
 
 /**
  * Deletes a document from the Realtime Database.

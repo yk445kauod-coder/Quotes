@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 import {
   Table,
   TableBody,
@@ -15,9 +16,13 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
+  DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Trash2, Eye, FileDown, Loader2 } from "lucide-react";
+import { MoreHorizontal, Trash2, Edit, FileDown, Loader2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,12 +38,16 @@ import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
 import type { DocumentData } from "@/lib/types";
 import { getDocuments, deleteDocument } from "@/lib/firebase-client";
+import { exportToPdf, exportToWord, exportToExcel } from "@/lib/export";
+import { DocumentPreview } from "./document-preview";
 
 export function DocumentList() {
   const [documents, setDocuments] = useState<DocumentData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const [exportingDoc, setExportingDoc] = useState<DocumentData | null>(null);
+  const exportContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchDocuments = async () => {
@@ -66,7 +75,6 @@ export function DocumentList() {
     fetchDocuments();
   }, [toast]);
 
-
   const handleDelete = async (id: string) => {
     const originalDocuments = [...documents];
     setDocuments(documents.filter((doc) => doc.id !== id));
@@ -88,6 +96,35 @@ export function DocumentList() {
     }
   };
 
+  const handleExport = async (doc: DocumentData, format: 'pdf' | 'word' | 'excel') => {
+    setExportingDoc(doc);
+    // Wait for the state to update and the component to re-render
+    await new Promise(resolve => setTimeout(resolve, 0)); 
+    
+    const exportContainer = exportContainerRef.current;
+    if (!exportContainer) {
+        toast({ variant: "destructive", title: "خطأ", description: "عنصر التصدير غير موجود." });
+        setExportingDoc(null);
+        return;
+    }
+
+    try {
+        if (format === 'pdf') {
+            await exportToPdf(exportContainer, doc.docId);
+        } else if (format === 'word') {
+            await exportToWord(exportContainer, doc.docId);
+        } else if (format === 'excel') {
+            exportToExcel(doc.items, doc.docId);
+        }
+        toast({ title: "تم التصدير", description: `تم تصدير المستند كـ ${format.toUpperCase()}.` });
+    } catch (e) {
+        toast({ variant: "destructive", title: "خطأ في التصدير", description: "فشل تصدير المستند." });
+    } finally {
+        setExportingDoc(null);
+    }
+  };
+
+
   if (loading) {
     return (
         <div className="flex justify-center items-center py-8">
@@ -105,7 +142,6 @@ export function DocumentList() {
     );
   }
 
-
   if (documents.length === 0) {
     return (
       <div className="text-center text-gray-500 py-8">
@@ -116,6 +152,7 @@ export function DocumentList() {
   }
 
   return (
+    <>
     <div className="rounded-md border">
       <Table>
         <TableHeader>
@@ -154,14 +191,33 @@ export function DocumentList() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>
-                        <Eye className="me-2 h-4 w-4" />
-                        عرض
+                      <DropdownMenuItem asChild>
+                        <Link href={`/edit/${doc.id}`}>
+                            <Edit className="me-2 h-4 w-4" />
+                            تعديل
+                        </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <FileDown className="me-2 h-4 w-4" />
-                        تصدير
-                      </DropdownMenuItem>
+                      
+                       <DropdownMenuSub>
+                          <DropdownMenuSubTrigger>
+                            <FileDown className="me-2 h-4 w-4" />
+                            <span>تصدير</span>
+                          </DropdownMenuSubTrigger>
+                          <DropdownMenuPortal>
+                             <DropdownMenuSubContent>
+                                <DropdownMenuItem onClick={() => handleExport(doc, 'pdf')}>
+                                  <span>تصدير PDF</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleExport(doc, 'word')}>
+                                  <span>تصدير Word</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleExport(doc, 'excel')}>
+                                  <span>تصدير Excel</span>
+                                </DropdownMenuItem>
+                             </DropdownMenuSubContent>
+                          </DropdownMenuPortal>
+                       </DropdownMenuSub>
+
                        <AlertDialogTrigger asChild>
                         <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10">
                           <Trash2 className="me-2 h-4 w-4" />
@@ -191,5 +247,14 @@ export function DocumentList() {
         </TableBody>
       </Table>
     </div>
+    {/* Hidden container for exporting */}
+    {exportingDoc && (
+      <div className="hidden">
+        <div ref={exportContainerRef}>
+          <DocumentPreview formData={exportingDoc} isForPdf={true} />
+        </div>
+      </div>
+    )}
+    </>
   );
 }

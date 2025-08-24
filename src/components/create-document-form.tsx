@@ -42,11 +42,11 @@ import {
   Wand2,
 } from "lucide-react";
 import { fetchSmartSuggestionsAction, fetchItemDescriptionSuggestionAction } from "@/lib/actions";
-import { saveDocument } from "@/lib/firebase-client";
+import { saveDocument, updateDocument } from "@/lib/firebase-client";
 import { formatCurrency } from "@/lib/utils";
 import type { DocumentData, DocumentType } from "@/lib/types";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 
 const formSchema = z.object({
@@ -71,18 +71,25 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-export function CreateDocumentForm() {
+interface CreateDocumentFormProps {
+    existingDocument?: DocumentData;
+}
+
+export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
   const [suggestingItemIndex, setSuggestingItemIndex] = useState<number | null>(null);
+  const isEditMode = !!existingDocument;
 
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
+    defaultValues: isEditMode ? {
+        ...existingDocument,
+    } : {
       docType: "quote",
       clientName: "",
       subject: "",
@@ -91,6 +98,12 @@ export function CreateDocumentForm() {
       paymentMethod: "",
     },
   });
+  
+  useEffect(() => {
+    if (existingDocument) {
+        form.reset(existingDocument);
+    }
+  }, [existingDocument, form]);
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -110,21 +123,35 @@ export function CreateDocumentForm() {
 
   async function onSubmit(values: FormValues) {
     setIsSaving(true);
-    const docToSave: Omit<DocumentData, 'id'> = {
-      ...values,
-      subTotal,
-      taxAmount,
-      total,
-      docId: `temp-${Date.now()}`, // Temporary ID that will be replaced by a real one in saveDocument
-      createdAt: new Date().toISOString(),
-    };
-
+    
     try {
-      await saveDocument(docToSave);
-      toast({
-        title: "تم الحفظ بنجاح",
-        description: "تم حفظ المستند في قاعدة البيانات.",
-      });
+      if (isEditMode && existingDocument) {
+        const docToUpdate: DocumentData = {
+          ...existingDocument,
+          ...values,
+          subTotal,
+          taxAmount,
+          total,
+        };
+        await updateDocument(existingDocument.id, docToUpdate);
+        toast({
+          title: "تم التحديث بنجاح",
+          description: "تم تحديث المستند في قاعدة البيانات.",
+        });
+      } else {
+        const docToSave: Omit<DocumentData, 'id' | 'docId'> = {
+          ...values,
+          subTotal,
+          taxAmount,
+          total,
+          createdAt: new Date().toISOString(),
+        };
+        await saveDocument(docToSave);
+        toast({
+          title: "تم الحفظ بنجاح",
+          description: "تم حفظ المستند في قاعدة البيانات.",
+        });
+      }
       router.push("/");
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "فشل في حفظ المستند.";
@@ -207,7 +234,10 @@ export function CreateDocumentForm() {
         return;
     }
     
-    const docId = `${form.getValues('docType')}-${form.getValues('clientName')}`.replace(/\s/g, '_');
+    const docId = isEditMode 
+      ? existingDocument.docId 
+      : `${form.getValues('docType')}-${form.getValues('clientName')}`.replace(/\s/g, '_');
+      
     const opt = {
       margin: 0,
       filename: `${docId}.pdf`,
@@ -445,7 +475,7 @@ export function CreateDocumentForm() {
                  </Button>
                 <Button type="submit" disabled={isSaving}>
                   {isSaving ? <Loader2 className="ms-2 h-4 w-4 animate-spin" /> : <Save className="ms-2 h-4 w-4" />}
-                  حفظ المستند
+                  {isEditMode ? 'تحديث المستند' : 'حفظ المستند'}
                 </Button>
               </div>
             </form>
@@ -461,12 +491,18 @@ export function CreateDocumentForm() {
           <CardContent>
              {/* This div is for the live preview on screen */}
             <div id="document-preview-container" className="w-full aspect-[1/1.414] border rounded-lg shadow-md overflow-hidden">
-                <DocumentPreview formData={watchedAll} isForPdf={false} />
+                <DocumentPreview 
+                    formData={{...watchedAll, docId: isEditMode ? existingDocument.docId : undefined }} 
+                    isForPdf={false} 
+                />
             </div>
              {/* This div is hidden and used only for PDF export */}
             <div className="hidden">
                  <div id="document-pdf-export">
-                    <DocumentPreview formData={watchedAll} isForPdf={true} />
+                    <DocumentPreview 
+                        formData={{...watchedAll, docId: isEditMode ? existingDocument.docId : undefined }} 
+                        isForPdf={true} 
+                    />
                  </div>
             </div>
           </CardContent>
@@ -475,5 +511,3 @@ export function CreateDocumentForm() {
     </div>
   );
 }
-
-    
