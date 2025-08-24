@@ -115,9 +115,10 @@ export function CreateDocumentForm() {
       subTotal,
       taxAmount,
       total,
-      docId: `temp-${Date.now()}`, // Temporary ID
+      docId: `temp-${Date.now()}`, // Temporary ID that will be replaced by a real one in saveDocument
       createdAt: new Date().toISOString(),
     };
+
     try {
       await saveDocument(docToSave);
       toast({
@@ -474,3 +475,5 @@ export function CreateDocumentForm() {
     </div>
   );
 }
+
+    
