@@ -1,5 +1,4 @@
 export interface DocumentItem {
-  id: string;
   description: string;
   unit: string;
   quantity: number;

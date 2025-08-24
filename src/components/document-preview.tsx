@@ -88,8 +88,8 @@ export function DocumentPreview({ formData }: DocumentPreviewProps) {
                         <td className="border p-2">{item.description}</td>
                         <td className="border p-2">{item.unit}</td>
                         <td className="border p-2">{item.quantity}</td>
-                        <td className="border p-2">{formatCurrency(item.price || 0, ' ')}</td>
-                        <td className="border p-2">{formatCurrency((item.quantity || 0) * (item.price || 0), ' ')}</td>
+                        <td className="border p-2">{formatCurrency(item.price || 0)}</td>
+                        <td className="border p-2">{formatCurrency((item.quantity || 0) * (item.price || 0))}</td>
                     </tr>
                 ))}
             </tbody>
