@@ -87,7 +87,7 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: isEditMode ? {
+    defaultValues: isEditMode && existingDocument ? {
         ...existingDocument,
     } : {
       docType: "quote",
@@ -98,12 +98,6 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
       paymentMethod: "",
     },
   });
-  
-  useEffect(() => {
-    if (existingDocument) {
-        form.reset(existingDocument);
-    }
-  }, [existingDocument, form]);
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
