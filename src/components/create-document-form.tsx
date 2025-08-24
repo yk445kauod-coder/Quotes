@@ -1,3 +1,4 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -91,6 +92,8 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
       if (isEditMode && existingDocument) {
         return {
           ...existingDocument,
+          terms: existingDocument.terms || "",
+          paymentMethod: existingDocument.paymentMethod || "",
         };
       }
       // For new documents, fetch default settings
@@ -527,5 +530,7 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
     </div>
   );
 }
+
+    
 
     
