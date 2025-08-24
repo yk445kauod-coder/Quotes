@@ -82,6 +82,7 @@
       "out/**/*",
       "electron/**/*",
       "src/**/*",
+      "next.config.js",
       "*.js",
       "*.json",
       "*.ts"

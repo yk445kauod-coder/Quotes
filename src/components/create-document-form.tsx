@@ -42,7 +42,8 @@ import {
   Loader2,
   Wand2,
 } from "lucide-react";
-import { fetchSmartSuggestionsAction, fetchItemDescriptionSuggestionAction } from "@/lib/actions";
+import { getSmartSuggestions } from "@/ai/flows/smart-suggestion-tool";
+import { getItemDescriptionSuggestion } from "@/ai/flows/item-description-suggestion-flow";
 import { saveDocument, updateDocument, getSettings } from "@/lib/firebase-client";
 import { formatCurrency } from "@/lib/utils";
 import type { DocumentData, DocumentType } from "@/lib/types";
@@ -186,25 +187,26 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
 
   async function handleGetSuggestions() {
     setIsSuggesting(true);
-    const documentDetails = `العميل: ${form.getValues("clientName")}, الموضوع: ${form.getValues("subject")}, البنود: ${form.getValues("items").map(i => i.description).join(', ')}`;
-    const result = await fetchSmartSuggestionsAction({
-      documentType: form.getValues("docType") as DocumentType,
-      documentDetails,
-    });
-    setIsSuggesting(false);
-    if (result.success && result.data) {
-      form.setValue("terms", result.data.termsAndConditions);
-      form.setValue("paymentMethod", result.data.paymentMethods);
+    try {
+      const documentDetails = `العميل: ${form.getValues("clientName")}, الموضوع: ${form.getValues("subject")}, البنود: ${form.getValues("items").map(i => i.description).join(', ')}`;
+      const result = await getSmartSuggestions({
+        documentType: form.getValues("docType") as DocumentType,
+        documentDetails,
+      });
+      form.setValue("terms", result.termsAndConditions);
+      form.setValue("paymentMethod", result.paymentMethods);
       toast({
         title: "تم جلب الاقتراحات",
         description: "تم تحديث حقول الشروط وطرق الدفع.",
       });
-    } else {
-      toast({
+    } catch (error) {
+       toast({
         variant: "destructive",
         title: "خطأ",
-        description: result.error,
+        description: error instanceof Error ? error.message : "فشل في جلب الاقتراحات.",
       });
+    } finally {
+      setIsSuggesting(false);
     }
   }
 
@@ -219,24 +221,25 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
         return;
     }
     setSuggestingItemIndex(index);
-    const documentContext = `العميل: ${form.getValues("clientName")}, الموضوع: ${form.getValues("subject")}`;
-    const result = await fetchItemDescriptionSuggestionAction({
-        itemQuery,
-        documentContext,
-    });
-    setSuggestingItemIndex(null);
-    if (result.success && result.data) {
-        form.setValue(`items.${index}.description`, result.data.description);
+    try {
+        const documentContext = `العميل: ${form.getValues("clientName")}, الموضوع: ${form.getValues("subject")}`;
+        const result = await getItemDescriptionSuggestion({
+            itemQuery,
+            documentContext,
+        });
+        form.setValue(`items.${index}.description`, result.description);
         toast({
             title: "تم اقتراح الوصف",
             description: "تم تحديث وصف البند.",
         });
-    } else {
+    } catch(error) {
         toast({
             variant: "destructive",
             title: "خطأ",
-            description: result.error,
+            description: error instanceof Error ? error.message : "فشل في اقتراح الوصف.",
         });
+    } finally {
+        setSuggestingItemIndex(null);
     }
   }
 
@@ -253,7 +256,7 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
         return;
     }
     
-    const docId = isEditMode 
+    const docId = isEditMode && existingDocument
       ? existingDocument.docId 
       : `${form.getValues('docType')}-${form.getValues('clientName')}`.replace(/\s/g, '_');
       
@@ -511,7 +514,7 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
              {/* This div is for the live preview on screen */}
             <div id="document-preview-container" className="w-full aspect-[1/1.414] border rounded-lg shadow-md overflow-hidden">
                 <DocumentPreview 
-                    formData={{...watchedAll, docId: isEditMode ? existingDocument.docId : undefined }} 
+                    formData={{...watchedAll, docId: isEditMode && existingDocument ? existingDocument.docId : undefined }} 
                     isForPdf={false} 
                 />
             </div>
@@ -519,7 +522,7 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
             <div className="hidden">
                  <div id="document-pdf-export">
                     <DocumentPreview 
-                        formData={{...watchedAll, docId: isEditMode ? existingDocument.docId : undefined }} 
+                        formData={{...watchedAll, docId: isEditMode && existingDocument ? existingDocument.docId : undefined }} 
                         isForPdf={true} 
                     />
                  </div>
@@ -530,7 +533,3 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
     </div>
   );
 }
-
-    
-
-    
