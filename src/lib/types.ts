@@ -8,14 +8,14 @@ export interface DocumentItem {
 export type DocumentType = "quote" | "estimation";
 
 export interface DocumentData {
-  id: string;
-  docId: string;
+  id: string; // Firebase Realtime DB key
+  docId: string; // User-facing ID, e.g. Q-2024-001
   docType: DocumentType;
   clientName: string;
   subject: string;
   items: DocumentItem[];
-  terms: string;
-  paymentMethod: string;
+  terms?: string;
+  paymentMethod?: string;
   createdAt: string; // Stored as ISO string
   subTotal: number;
   taxAmount: number;

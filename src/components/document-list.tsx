@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -17,7 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Trash2, Eye, FileDown } from "lucide-react";
+import { MoreHorizontal, Trash2, Eye, FileDown, Loader2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,40 +27,83 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
 import type { DocumentData } from "@/lib/types";
-import { deleteDocument } from "@/lib/actions";
+import { getDocuments, deleteDocument } from "@/lib/firebase-client";
 
-interface DocumentListProps {
-  initialDocuments: DocumentData[];
-}
-
-export function DocumentList({ initialDocuments }: DocumentListProps) {
-  const [documents, setDocuments] = useState(initialDocuments);
+export function DocumentList() {
+  const [documents, setDocuments] = useState<DocumentData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchDocuments = async () => {
+      try {
+        setLoading(true);
+        const unsubscribe = getDocuments((docs) => {
+          setDocuments(docs);
+          setLoading(false);
+        });
+        // In a real app, you might want to return the unsubscribe function
+        // from the useEffect cleanup to stop listening when the component unmounts.
+        // For simplicity, we're not doing that here.
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : "فشل في جلب المستندات.";
+        setError(errorMessage);
+        setLoading(false);
+        toast({
+          variant: "destructive",
+          title: "خطأ",
+          description: errorMessage,
+        });
+      }
+    };
+
+    fetchDocuments();
+  }, [toast]);
+
 
   const handleDelete = async (id: string) => {
     const originalDocuments = [...documents];
     setDocuments(documents.filter((doc) => doc.id !== id));
 
-    const result = await deleteDocument(id);
-    if (!result.success) {
-      setDocuments(originalDocuments);
-      toast({
-        variant: "destructive",
-        title: "خطأ",
-        description: result.error,
-      });
-    } else {
-       toast({
-        title: "تم الحذف",
-        description: "تم حذف المستند بنجاح.",
-      });
+    try {
+        await deleteDocument(id);
+        toast({
+            title: "تم الحذف",
+            description: "تم حذف المستند بنجاح.",
+        });
+    } catch (err) {
+        setDocuments(originalDocuments);
+        const errorMessage = err instanceof Error ? err.message : "فشل في حذف المستند.";
+        toast({
+            variant: "destructive",
+            title: "خطأ",
+            description: errorMessage,
+        });
     }
   };
+
+  if (loading) {
+    return (
+        <div className="flex justify-center items-center py-8">
+            <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+    )
+  }
+  
+  if (error) {
+     return (
+      <div className="text-center text-red-500 py-8">
+        <p>حدث خطأ أثناء تحميل المستندات:</p>
+        <p>{error}</p>
+      </div>
+    );
+  }
+
 
   if (documents.length === 0) {
     return (

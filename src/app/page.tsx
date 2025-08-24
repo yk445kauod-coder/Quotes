@@ -8,25 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { getDocuments } from "@/lib/actions";
 import { DocumentList } from "@/components/document-list";
-import { Suspense } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
-
-async function Documents() {
-  const documents = await getDocuments();
-  return <DocumentList initialDocuments={documents} />;
-}
-
-function DocumentsSkeleton() {
-  return (
-    <div className="space-y-2">
-      <Skeleton className="h-10 w-full" />
-      <Skeleton className="h-10 w-full" />
-      <Skeleton className="h-10 w-full" />
-    </div>
-  )
-}
 
 export default function DashboardPage() {
   return (
@@ -53,10 +35,7 @@ export default function DashboardPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Suspense fallback={<DocumentsSkeleton />}>
-            {/* @ts-expect-error Async Server Component */}
-            <Documents />
-          </Suspense>
+          <DocumentList />
         </CardContent>
       </Card>
     </div>

@@ -41,9 +41,10 @@ import {
   Loader2,
   Wand2,
 } from "lucide-react";
-import { fetchSmartSuggestionsAction, saveDocument, fetchItemDescriptionSuggestionAction } from "@/lib/actions";
+import { fetchSmartSuggestionsAction, fetchItemDescriptionSuggestionAction } from "@/lib/actions";
+import { saveDocument } from "@/lib/firebase-client";
 import { formatCurrency } from "@/lib/utils";
-import type { DocumentType } from "@/lib/types";
+import type { DocumentData, DocumentType } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
@@ -109,20 +110,30 @@ export function CreateDocumentForm() {
 
   async function onSubmit(values: FormValues) {
     setIsSaving(true);
-    const result = await saveDocument({ ...values, subTotal, taxAmount, total });
-    setIsSaving(false);
-    if (result.success) {
+    const docToSave: Omit<DocumentData, 'id'> = {
+      ...values,
+      subTotal,
+      taxAmount,
+      total,
+      docId: `temp-${Date.now()}`, // Temporary ID
+      createdAt: new Date().toISOString(),
+    };
+    try {
+      await saveDocument(docToSave);
       toast({
         title: "تم الحفظ بنجاح",
         description: "تم حفظ المستند في قاعدة البيانات.",
       });
       router.push("/");
-    } else {
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "فشل في حفظ المستند.";
       toast({
         variant: "destructive",
         title: "خطأ في الحفظ",
-        description: result.error,
+        description: errorMessage,
       });
+    } finally {
+      setIsSaving(false);
     }
   }
 
