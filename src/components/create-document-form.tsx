@@ -42,7 +42,7 @@ import {
   Wand2,
 } from "lucide-react";
 import { fetchSmartSuggestionsAction, fetchItemDescriptionSuggestionAction } from "@/lib/actions";
-import { saveDocument, updateDocument } from "@/lib/firebase-client";
+import { saveDocument, updateDocument, getSettings } from "@/lib/firebase-client";
 import { formatCurrency } from "@/lib/utils";
 import type { DocumentData, DocumentType } from "@/lib/types";
 import { useRouter } from "next/navigation";
@@ -87,15 +87,22 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: isEditMode && existingDocument ? {
-        ...existingDocument,
-    } : {
-      docType: "quote",
-      clientName: "",
-      subject: "",
-      items: [{ description: "", unit: "قطعة", quantity: 1, price: 0 }],
-      terms: "الأسعار شاملة الضريبة\nصالحة لمدة 30 يوم\nالتسليم خلال 15 يوم عمل",
-      paymentMethod: "",
+    defaultValues: async () => {
+      if (isEditMode && existingDocument) {
+        return {
+          ...existingDocument,
+        };
+      }
+      // For new documents, fetch default settings
+      const settings = await getSettings();
+      return {
+        docType: "quote",
+        clientName: "",
+        subject: "",
+        items: [{ description: "", unit: "قطعة", quantity: 1, price: 0 }],
+        terms: settings.defaultTerms || "",
+        paymentMethod: settings.defaultPaymentMethod || "",
+      };
     },
   });
 

@@ -25,6 +25,8 @@ import type { SettingsData } from "@/lib/types";
 const formSchema = z.object({
   headerImageUrl: z.string().url("يجب أن يكون رابطًا صحيحًا."),
   footerText: z.string().min(1, "نص التذييل مطلوب."),
+  defaultTerms: z.string().optional(),
+  defaultPaymentMethod: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -39,6 +41,8 @@ export default function SettingsPage() {
     defaultValues: {
       headerImageUrl: "",
       footerText: "",
+      defaultTerms: "",
+      defaultPaymentMethod: "",
     },
   });
 
@@ -94,7 +98,7 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle>إعدادات المستند</CardTitle>
           <CardDescription>
-            تغيير البيانات التي تظهر في رأس وتذييل كل المستندات.
+            تغيير البيانات التي تظهر في رأس وتذييل كل المستندات، بالإضافة إلى القيم الافتراضية.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -122,6 +126,40 @@ export default function SettingsPage() {
                     <FormControl>
                       <Textarea
                         placeholder="اسم الشركة ومعلومات الاتصال..."
+                        {...field}
+                        rows={4}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="defaultTerms"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>الشروط الافتراضية</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="الشروط والأحكام التي تظهر عند إنشاء مستند جديد..."
+                        {...field}
+                        rows={5}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="defaultPaymentMethod"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>طريقة الدفع الافتراضية</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="طريقة الدفع التي تظهر عند إنشاء مستند جديد..."
                         {...field}
                         rows={4}
                       />

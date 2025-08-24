@@ -25,4 +25,6 @@ export interface DocumentData {
 export interface SettingsData {
   headerImageUrl: string;
   footerText: string;
+  defaultTerms?: string;
+  defaultPaymentMethod?: string;
 }

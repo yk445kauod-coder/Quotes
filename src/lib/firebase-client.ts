@@ -113,7 +113,9 @@ export async function getSettings(): Promise<SettingsData> {
     // Return default values if no settings are found in the DB
     return {
         headerImageUrl: "https://placehold.co/700x100.png",
-        footerText: "Company Name\nAddress\nPhone & Email"
+        footerText: "Company Name\nAddress\nPhone & Email",
+        defaultTerms: "الأسعار شاملة الضريبة\nصالحة لمدة 30 يوم\nالتسليم خلال 15 يوم عمل",
+        defaultPaymentMethod: "سيتم تحديدها لاحقاً."
     };
 }
 
