@@ -94,15 +94,30 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
         };
       }
       // For new documents, fetch default settings
-      const settings = await getSettings();
-      return {
-        docType: "quote",
-        clientName: "",
-        subject: "",
-        items: [{ description: "", unit: "قطعة", quantity: 1, price: 0 }],
-        terms: settings.defaultTerms || "",
-        paymentMethod: settings.defaultPaymentMethod || "",
-      };
+      try {
+        const settings = await getSettings();
+        return {
+          docType: "quote",
+          clientName: "",
+          subject: "",
+          items: [{ description: "", unit: "قطعة", quantity: 1, price: 0 }],
+          terms: settings.defaultTerms || "",
+          paymentMethod: settings.defaultPaymentMethod || "",
+        };
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          title: "خطأ في تحميل الإعدادات الافتراضية",
+        });
+        return {
+          docType: "quote",
+          clientName: "",
+          subject: "",
+          items: [{ description: "", unit: "قطعة", quantity: 1, price: 0 }],
+          terms: "",
+          paymentMethod: "",
+        };
+      }
     },
   });
 
@@ -111,7 +126,7 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
     name: "items",
   });
 
-  const watchedItems = form.watch("items");
+  const watchedItems = form.watch("items") || [];
   const subTotal = watchedItems.reduce(
     (acc, item) => acc + (item.quantity || 0) * (item.price || 0),
     0
@@ -512,3 +527,5 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
     </div>
   );
 }
+
+    

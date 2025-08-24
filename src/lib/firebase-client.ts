@@ -112,7 +112,7 @@ export async function getSettings(): Promise<SettingsData> {
     }
     // Return default values if no settings are found in the DB
     return {
-        headerImageUrl: "https://placehold.co/700x100.png",
+        headerImageUrl: "https://ik.imagekit.io/fpbwa3np7/%D8%A8%D8%B1%D9%86%D8%A7%D9%85%D8%AC%20%D8%B9%D8%B1%D9%88%D8%B6%20%D8%A7%D9%84%D8%A7%D8%B3%D8%B9%D8%A7%D8%B1/header%20-%20Copy.png?updatedAt=1755348570527",
         footerText: "Company Name\nAddress\nPhone & Email",
         defaultTerms: "الأسعار شاملة الضريبة\nصالحة لمدة 30 يوم\nالتسليم خلال 15 يوم عمل",
         defaultPaymentMethod: "سيتم تحديدها لاحقاً."
@@ -127,3 +127,5 @@ export async function saveSettings(settings: SettingsData): Promise<void> {
     const settingsRef = ref(db, 'settings');
     await set(settingsRef, settings);
 }
+
+    
