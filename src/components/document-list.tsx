@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Table,
   TableBody,
@@ -48,6 +48,8 @@ export function DocumentList() {
   const { toast } = useToast();
   const [exportingDoc, setExportingDoc] = useState<DocumentData | null>(null);
   const exportContainerRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
 
   useEffect(() => {
     const fetchDocuments = async () => {
@@ -74,6 +76,10 @@ export function DocumentList() {
 
     fetchDocuments();
   }, [toast]);
+  
+  const handleEdit = (id: string) => {
+    router.push(`/edit/${id}`);
+  };
 
   const handleDelete = async (id: string) => {
     const originalDocuments = [...documents];
@@ -191,11 +197,9 @@ export function DocumentList() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem asChild>
-                        <Link href={`/edit/${doc.id}`}>
-                            <Edit className="me-2 h-4 w-4" />
-                            تعديل
-                        </Link>
+                      <DropdownMenuItem onClick={() => handleEdit(doc.id)}>
+                        <Edit className="me-2 h-4 w-4" />
+                        تعديل
                       </DropdownMenuItem>
                       
                        <DropdownMenuSub>
