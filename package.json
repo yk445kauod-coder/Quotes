@@ -12,7 +12,7 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "electron:dev": "concurrently -k \"npm:dev\" \"wait-on http://localhost:9003 && electron .\"",
-    "electron:build": "npm run build && electron-builder"
+    "dist": "npm run build && electron-builder"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.14.1",
