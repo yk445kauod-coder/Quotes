@@ -39,12 +39,13 @@ import {
   Save,
   FileDown,
   Loader2,
+  Wand2,
 } from "lucide-react";
-import { fetchSmartSuggestionsAction, saveDocument } from "@/lib/actions";
+import { fetchSmartSuggestionsAction, saveDocument, fetchItemDescriptionSuggestionAction } from "@/lib/actions";
 import { formatCurrency } from "@/lib/utils";
 import type { DocumentType } from "@/lib/types";
 import { useRouter } from "next/navigation";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import html2pdf from "html2pdf.js";
 
 const formSchema = z.object({
@@ -75,6 +76,8 @@ export function CreateDocumentForm() {
   const [isSaving, setIsSaving] = useState(false);
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
+  const [suggestingItemIndex, setSuggestingItemIndex] = useState<number | null>(null);
+
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -147,12 +150,44 @@ export function CreateDocumentForm() {
     }
   }
 
+  async function handleGetItemDescription(index: number) {
+    const itemQuery = form.getValues(`items.${index}.description`);
+    if (!itemQuery) {
+        toast({
+            variant: "destructive",
+            title: "خطأ",
+            description: "يرجى كتابة كلمة أو كلمتين عن البند أولاً.",
+        });
+        return;
+    }
+    setSuggestingItemIndex(index);
+    const documentContext = `العميل: ${form.getValues("clientName")}, الموضوع: ${form.getValues("subject")}`;
+    const result = await fetchItemDescriptionSuggestionAction({
+        itemQuery,
+        documentContext,
+    });
+    setSuggestingItemIndex(null);
+    if (result.success && result.data) {
+        form.setValue(`items.${index}.description`, result.data.description);
+        toast({
+            title: "تم اقتراح الوصف",
+            description: "تم تحديث وصف البند.",
+        });
+    } else {
+        toast({
+            variant: "destructive",
+            title: "خطأ",
+            description: result.error,
+        });
+    }
+  }
+
   const handleExportPdf = () => {
     setIsPrinting(true);
-    const element = document.getElementById('document-preview');
+    const element = document.getElementById('document-preview-container');
     const docId = `${form.getValues('docType')}-${form.getValues('clientName')}`.replace(/\s/g, '_');
     const opt = {
-      margin: 0.2,
+      margin: 0,
       filename: `${docId}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: { scale: 2, useCORS: true, logging: false },
@@ -234,13 +269,13 @@ export function CreateDocumentForm() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="w-[50px] p-2 text-right">م</TableHead>
+                        <TableHead className="w-[40px] p-2 text-right">م</TableHead>
                         <TableHead className="w-2/5 p-2 text-right">البيان</TableHead>
                         <TableHead className="p-2 text-right">الوحدة</TableHead>
                         <TableHead className="p-2 text-right">الكمية</TableHead>
                         <TableHead className="p-2 text-right">السعر</TableHead>
                         <TableHead className="p-2 text-right">الإجمالي</TableHead>
-                        <TableHead className="w-[50px] p-2 text-center">حذف</TableHead>
+                        <TableHead className="w-[80px] p-2 text-center">أدوات</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -252,7 +287,7 @@ export function CreateDocumentForm() {
                               control={form.control}
                               name={`items.${index}.description`}
                               render={({ field }) => (
-                                <Input {...field} placeholder="وصف البند" className="min-w-[150px]" />
+                                <Textarea {...field} placeholder="وصف البند" className="min-w-[150px]" rows={2} />
                               )}
                             />
                           </TableCell>
@@ -289,15 +324,32 @@ export function CreateDocumentForm() {
                             )}
                           </TableCell>
                           <TableCell className="p-1 align-middle text-center">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => remove(index)}
-                              disabled={fields.length <= 1}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
+                            <div className="flex flex-col items-center gap-1">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleGetItemDescription(index)}
+                                  disabled={suggestingItemIndex === index}
+                                  title="اقتراح وصف"
+                                >
+                                  {suggestingItemIndex === index ? (
+                                     <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                     <Wand2 className="h-4 w-4 text-primary" />
+                                  )}
+                                </Button>
+                                <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => remove(index)}
+                                disabled={fields.length <= 1}
+                                title="حذف البند"
+                                >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -385,7 +437,7 @@ export function CreateDocumentForm() {
             <CardTitle>معاينة المستند</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="w-full aspect-[1/1.414] border rounded-lg shadow-md overflow-hidden">
+            <div id="document-preview-container" className="w-full aspect-[1/1.414] border rounded-lg shadow-md overflow-hidden">
                 <DocumentPreview formData={watchedAll} />
             </div>
           </CardContent>
