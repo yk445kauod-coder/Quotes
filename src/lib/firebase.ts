@@ -9,7 +9,7 @@ const firebaseConfig = {
   authDomain: "maher-project.firebaseapp.com",
   databaseURL: "https://maher-project-default-rtdb.firebaseio.com",
   projectId: "maher-project",
-  storageBucket: "maher-project.appspot.com",
+  storageBucket: "maher-project.firebasestorage.app",
   messagingSenderId: "266963974491",
   appId: "1:266963974491:web:ebe7c920ca34bdbcea027e"
 };
