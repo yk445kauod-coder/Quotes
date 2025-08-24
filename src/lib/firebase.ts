@@ -21,25 +21,34 @@ export const db = getDatabase(app);
 
 // Initialize Firebase Admin SDK
 let adminDb: admin.database.Database | undefined;
-try {
-    const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-    if (serviceAccountString) {
-        const serviceAccount = JSON.parse(serviceAccountString);
-        if (admin.apps.length === 0) {
-            admin.initializeApp({
-              credential: admin.credential.cert(serviceAccount),
-              databaseURL: firebaseConfig.databaseURL,
-            });
-        }
-        adminDb = admin.database();
-    } else if (process.env.NODE_ENV !== 'development') {
-        // Log a warning only if not in development, as it might be expected during local dev without a key.
-        console.warn("FIREBASE_SERVICE_ACCOUNT_KEY is not set. Server-side admin features will be disabled.");
+
+function initializeAdmin() {
+    if (admin.apps.length > 0) {
+        return admin.app();
     }
-} catch (error) {
-    console.error('Firebase Admin Initialization Error:', error);
-    // Setting adminDb to undefined here ensures that checks for it will fail.
-    adminDb = undefined;
+
+    const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+    if (!serviceAccountString) {
+        console.warn("FIREBASE_SERVICE_ACCOUNT_KEY is not set. Server-side admin features will be disabled.");
+        return;
+    }
+    
+    try {
+        const serviceAccount = JSON.parse(serviceAccountString);
+        return admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount),
+            databaseURL: firebaseConfig.databaseURL,
+        });
+    } catch (error) {
+        console.error('Firebase Admin Initialization Error from JSON parsing:', error);
+        return;
+    }
 }
+
+const adminApp = initializeAdmin();
+if (adminApp) {
+    adminDb = admin.database();
+}
+
 
 export { adminDb };
