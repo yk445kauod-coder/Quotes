@@ -13,26 +13,12 @@ import { formatCurrency } from "./utils";
  * @returns A promise that resolves with the Base64 string.
  */
 async function imageToBase64(url: string): Promise<string> {
-    // A simple CORS proxy can be used, or a serverless function.
-    // This example uses a public proxy for demonstration.
-    // For production, it's highly recommended to host your own proxy.
-    const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+    if (!url) return "";
     try {
-        const response = await fetch(`${proxyUrl}${url}`);
+        // Using a more reliable proxy
+        const response = await fetch(`https://images.weserv.nl/?url=${encodeURIComponent(url)}`);
         if (!response.ok) {
-            console.error(`CORS Anywhere proxy failed: ${response.statusText}. Trying direct fetch.`);
-            // Fallback to direct fetch if proxy fails
-            const directResponse = await fetch(url);
-            if (!directResponse.ok) {
-                throw new Error(`Direct fetch failed: ${directResponse.statusText}`);
-            }
-            const blob = await directResponse.blob();
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result as string);
-                reader.onerror = reject;
-                reader.readAsDataURL(blob);
-            });
+            throw new Error(`Proxy fetch failed: ${response.statusText}`);
         }
         const blob = await response.blob();
         return new Promise((resolve, reject) => {
@@ -64,7 +50,7 @@ function convertToCSV(items: DocumentItem[]): string {
 
 /**
  * Builds a self-contained HTML string for a document, suitable for PDF/Word export.
- * This function has been completely rebuilt to match the target design image.
+ * This function has been completely rebuilt to handle pagination correctly.
  * @param docData The document data.
  * @param settings The application settings.
  * @returns A promise resolving to the full HTML string.
@@ -76,49 +62,117 @@ async function buildExportHtml(docData: DocumentData, settings: SettingsData): P
     const docTypeName = docData.docType === 'quote' ? 'عرض سعر' : 'مقايسة';
     const docIdText = docData.docId || '[سيتم إنشاؤه عند الحفظ]';
 
-    const itemsHtml = docData.items.map((item, index) => `
-        <tr style="page-break-inside: avoid;">
-            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: top; width: 5%;">${index + 1}</td>
-            <td style="border: 1px solid #ddd; padding: 8px; white-space: pre-wrap; vertical-align: top; text-align: right; line-height: 1.5; width: 50%;">${item.description || ''}</td>
-            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: top; width: 10%;">${item.unit}</td>
-            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: top; width: 10%;">${item.quantity}</td>
-            <td style="border: 1px solid #ddd; padding: 8px; text-align: right; vertical-align: top; width: 12.5%;">${formatCurrency(item.price || 0)}</td>
-            <td style="border: 1px solid #ddd; padding: 8px; text-align: right; vertical-align: top; width: 12.5%;">${formatCurrency((item.quantity || 0) * (item.price || 0))}</td>
-        </tr>
-    `).join('');
+    const ITEMS_PER_PAGE = 14;
+    const itemPages = [];
+    for (let i = 0; i < docData.items.length; i += ITEMS_PER_PAGE) {
+        itemPages.push(docData.items.slice(i, i + ITEMS_PER_PAGE));
+    }
+    
+    const totalPages = itemPages.length;
 
-    const summaryHtml = `
-      <table style="width: 100%; margin-top: 20px; page-break-inside: avoid;">
-        <tr>
-          <td style="width: 60%; vertical-align: top; padding-left: 20px;">
-              ${docData.docType === 'quote' ? `
-                  <h3 style="font-weight: bold; margin: 0 0 5px 0; font-size: 11pt; text-align: right;">طريقة الدفع:</h3>
-                  <div style="white-space: pre-wrap; font-size: 10pt; text-align: right; margin-bottom: 15px; line-height: 1.6;">${docData.paymentMethod || ''}</div>
-                  <h3 style="font-weight: bold; margin: 0 0 5px 0; font-size: 11pt; text-align: right;">الشروط العامة:</h3>
-                  <div style="white-space: pre-wrap; font-size: 10pt; text-align: right; line-height: 1.6;">${docData.terms || ''}</div>
-              ` : ''}
-          </td>
-          <td style="width: 40%; vertical-align: top;">
-              <table style="width: 100%; border-collapse: collapse; font-size: 10pt;">
-                  <tbody>
-                      <tr>
-                          <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold; text-align: right;">المجموع قبل الضريبة</td>
-                          <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${formatCurrency(docData.subTotal)}</td>
-                      </tr>
-                      <tr>
-                          <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold; text-align: right;">الضريبة (14%)</td>
-                          <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${formatCurrency(docData.taxAmount)}</td>
-                      </tr>
-                      <tr>
-                          <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold; background-color: #eee; text-align: right;">الإجمالي</td>
-                          <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold; background-color: #eee; text-align: right;">${formatCurrency(docData.total)}</td>
-                      </tr>
-                  </tbody>
-              </table>
-          </td>
-        </tr>
-      </table>
+    const renderItemsTable = (items: DocumentItem[], startIndex: number) => {
+        const rows = items.map((item, index) => `
+            <tr style="page-break-inside: avoid;">
+                <td style="border: 1px solid #333; padding: 6px; text-align: center; vertical-align: top; width: 5%;">${startIndex + index + 1}</td>
+                <td style="border: 1px solid #333; padding: 6px; white-space: pre-wrap; vertical-align: top; text-align: right; line-height: 1.5; width: 50%;">${item.description || ''}</td>
+                <td style="border: 1px solid #333; padding: 6px; text-align: center; vertical-align: top; width: 10%;">${item.unit}</td>
+                <td style="border: 1px solid #333; padding: 6px; text-align: center; vertical-align: top; width: 10%;">${item.quantity}</td>
+                <td style="border: 1px solid #333; padding: 6px; text-align: right; vertical-align: top; width: 12.5%;">${formatCurrency(item.price || 0)}</td>
+                <td style="border: 1px solid #333; padding: 6px; text-align: right; vertical-align: top; width: 12.5%;">${formatCurrency((item.quantity || 0) * (item.price || 0))}</td>
+            </tr>
+        `).join('');
+
+        return `
+            <table class="items-table" style="width: 100%; border-collapse: collapse; font-size: 10pt;">
+                <thead>
+                    <tr>
+                        <th style="border: 1px solid #333; padding: 8px; text-align: center; font-weight: bold; width: 5%;">م</th>
+                        <th style="border: 1px solid #333; padding: 8px; text-align: right; font-weight: bold; width: 50%;">البيان</th>
+                        <th style="border: 1px solid #333; padding: 8px; text-align: center; font-weight: bold; width: 10%;">الوحدة</th>
+                        <th style="border: 1px solid #333; padding: 8px; text-align: center; font-weight: bold; width: 10%;">العدد</th>
+                        <th style="border: 1px solid #333; padding: 8px; text-align: right; font-weight: bold; width: 12.5%;">السعر</th>
+                        <th style="border: 1px solid #333; padding: 8px; text-align: right; font-weight: bold; width: 12.5%;">الإجمالي</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rows}
+                </tbody>
+            </table>
+        `;
+    };
+
+    const summarySection = `
+      <div class="summary-section">
+        <table style="width: 100%; margin-top: 20px; border: none; page-break-inside: avoid;">
+            <tr>
+              <td style="width: 60%; vertical-align: top; padding-left: 20px; border: none;">
+                  ${docData.docType === 'quote' ? `
+                      <h3 style="font-weight: bold; margin: 0 0 5px 0; font-size: 11pt; text-align: right;">طريقة الدفع:</h3>
+                      <div style="white-space: pre-wrap; font-size: 10pt; text-align: right; margin-bottom: 15px; line-height: 1.6;">${docData.paymentMethod || ''}</div>
+                      <h3 style="font-weight: bold; margin: 0 0 5px 0; font-size: 11pt; text-align: right;">الشروط العامة:</h3>
+                      <div style="white-space: pre-wrap; font-size: 10pt; text-align: right; line-height: 1.6;">${docData.terms || ''}</div>
+                  ` : ''}
+              </td>
+              <td style="width: 40%; vertical-align: top; border: none;">
+                  <table style="width: 100%; border-collapse: collapse; font-size: 10pt;">
+                      <tbody>
+                          <tr>
+                              <td style="border: 1px solid #333; padding: 8px; font-weight: bold; text-align: right;">المجموع قبل الضريبة</td>
+                              <td style="border: 1px solid #333; padding: 8px; text-align: right;">${formatCurrency(docData.subTotal)}</td>
+                          </tr>
+                          <tr>
+                              <td style="border: 1px solid #333; padding: 8px; font-weight: bold; text-align: right;">الضريبة (14%)</td>
+                              <td style="border: 1px solid #333; padding: 8px; text-align: right;">${formatCurrency(docData.taxAmount)}</td>
+                          </tr>
+                          <tr>
+                              <td style="border: 1px solid #333; padding: 8px; font-weight: bold; background-color: #eee; text-align: right;">الإجمالي</td>
+                              <td style="border: 1px solid #333; padding: 8px; font-weight: bold; background-color: #eee; text-align: right;">${formatCurrency(docData.total)}</td>
+                          </tr>
+                      </tbody>
+                  </table>
+              </td>
+            </tr>
+        </table>
+      </div>
     `;
+
+    let pagesHtml = '';
+    itemPages.forEach((pageItems, pageIndex) => {
+        pagesHtml += `<div class="page-container">`;
+        // Page Header (only on first page)
+        if (pageIndex === 0) {
+            pagesHtml += `
+                <header class="export-header">
+                    ${headerImageBase64 ? `<img src="${headerImageBase64}" style="width: 100%; height: auto; display: block; max-height: 150px; object-fit: contain;">` : ''}
+                </header>
+                 <table style="width: 100%; margin-bottom: 15px; font-size: 11pt; border: none;">
+                  <tr>
+                    <td style="text-align: right; border: none;"><strong>السادة/</strong> ${docData.clientName || ''}</td>
+                    <td style="text-align: left; border: none;"><strong>التاريخ:</strong> ${today}</td>
+                  </tr>
+                  <tr>
+                    <td style="text-align: right; border: none;"><strong>الموضوع/</strong> ${docData.subject || ''}</td>
+                    <td style="text-align: left; border: none;"><strong>${docTypeName} رقم:</strong> ${docIdText}</td>
+                  </tr>
+                </table>
+                <div style="text-align: right; margin-bottom: 15px; font-size: 11pt;">
+                  <p style="margin:0;">تحية طيبة وبعد،،</p>
+                  <p style="margin:0;">بالإشارة إلى الموضوع أعلاه نتشرف بتقديم عرض أسعارنا كما يلي:</p>
+                </div>
+            `;
+        }
+
+        // Items Table
+        pagesHtml += renderItemsTable(pageItems, pageIndex * ITEMS_PER_PAGE);
+
+        // Summary Section (only on last page)
+        if (pageIndex === totalPages - 1) {
+            pagesHtml += summarySection;
+        }
+        
+        pagesHtml += `</div>`; // end page-container
+    });
+
 
     const footerTextHorizontal = settings.footerText.replace(/\n/g, '  <span style="margin: 0 10px;">/</span>  ');
 
@@ -138,56 +192,47 @@ async function buildExportHtml(docData: DocumentData, settings: SettingsData): P
               line-height: 1.4; 
               color: #000;
               margin: 0;
+              width: 210mm;
+              height: 297mm;
             }
-            .page-content {
-              padding-bottom: 40mm; /* Space for the footer */
+            .page-container {
+                page-break-after: always;
+                padding: 15mm 15mm 25mm 15mm; /* top right bottom left, bottom padding for footer */
+            }
+            .page-container:last-child {
+                page-break-after: avoid;
+            }
+            .export-header {
+                width: 100%; 
+                margin-bottom: 10px;
+            }
+            .items-table thead {
+                background-color: #36454F; 
+                color: white;
             }
             .export-footer {
-                display: none; /* Hide in body, only visible in @page */
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                width: 100%;
+                text-align: center;
+                font-size: 9pt;
+                padding: 10mm 15mm;
+                box-sizing: border-box;
+                border-top: 2px solid black;
+            }
+            table {
+                border-collapse: collapse;
+            }
+            th, td {
+                border: 1px solid #333;
+                text-align: right;
             }
           </style>
         </head>
         <body>
-          <div class="page-content">
-            <header class="export-header" style="width: 100%; margin-bottom: 10px;">
-                ${headerImageBase64 ? `<img src="${headerImageBase64}" style="width: 100%; height: auto; display: block; max-height: 150px; object-fit: contain;">` : ''}
-            </header>
-            
-            <table style="width: 100%; margin-bottom: 15px; font-size: 11pt;">
-              <tr>
-                <td style="text-align: right;"><strong>السادة/</strong> ${docData.clientName || ''}</td>
-                <td style="text-align: left;"><strong>التاريخ:</strong> ${today}</td>
-              </tr>
-              <tr>
-                <td style="text-align: right;"><strong>الموضوع/</strong> ${docData.subject || ''}</td>
-                <td style="text-align: left;"><strong>${docTypeName} رقم:</strong> ${docIdText}</td>
-              </tr>
-            </table>
-
-            <div style="text-align: right; margin-bottom: 15px; font-size: 11pt;">
-              <p style="margin:0;">تحية طيبة وبعد،،</p>
-              <p style="margin:0;">بالإشارة إلى الموضوع أعلاه نتشرف بتقديم عرض أسعارنا كما يلي:</p>
-            </div>
-
-            <main>
-                <table style="width: 100%; border-collapse: collapse; font-size: 10pt;">
-                    <thead style="background-color: #36454F; color: white;">
-                        <tr>
-                            <th style="border: 1px solid #333; padding: 8px; text-align: center; font-weight: bold; width: 5%;">م</th>
-                            <th style="border: 1px solid #333; padding: 8px; text-align: right; font-weight: bold; width: 50%;">البيان</th>
-                            <th style="border: 1px solid #333; padding: 8px; text-align: center; font-weight: bold; width: 10%;">الوحدة</th>
-                            <th style="border: 1px solid #333; padding: 8px; text-align: center; font-weight: bold; width: 10%;">العدد</th>
-                            <th style="border: 1px solid #333; padding: 8px; text-align: right; font-weight: bold; width: 12.5%;">السعر</th>
-                            <th style="border: 1px solid #333; padding: 8px; text-align: right; font-weight: bold; width: 12.5%;">الإجمالي</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${itemsHtml}
-                    </tbody>
-                </table>
-                ${summaryHtml}
-            </main>
-          </div>
+            ${pagesHtml}
             <footer class="export-footer">
                 ${footerTextHorizontal}
             </footer>
@@ -202,10 +247,10 @@ export async function exportToPdf(docData: DocumentData, fileName: string) {
     const htmlContent = await buildExportHtml(docData, settings);
 
     const opt = {
-        margin: 15, // in mm
+        margin: 0, // Margins are handled by the page-container style
         filename: `${fileName}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, logging: false },
+        html2canvas: { scale: 2, useCORS: true, logging: true },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
         pagebreak: { mode: ['css', 'legacy'] }
     };
@@ -233,16 +278,32 @@ export async function exportToWord(docData: DocumentData, fileName:string) {
             <w:DoNotOptimizeForBrowser/>
             <w:RtlGutter/>
           </w:WordDocument>
+          <w:LatentStyles DefLockedState="false" DefUnhideWhenUsed="true"
+            DefSemiHidden="true" DefQFormat="false" DefPriority="99"
+            LatentStyleCount="267">
+            <w:LsdException Locked="false" Priority="0" SemiHidden="false"
+            UnhideWhenUsed="false" QFormat="true" Name="Normal"/>
+            <w:LsdException Locked="false" Priority="9" SemiHidden="false"
+            UnhideWhenUsed="false" QFormat="true" Name="heading 1"/>
+            <w:LsdException Locked="false" Priority="10" QFormat="true" Name="Title"/>
+            <w:LsdException Locked="false" Priority="11" QFormat="true" Name="Subtitle"/>
+          </w:LatentStyles>
         </xml>
         <![endif]-->
         <style>
-          @page {
-            size: A4;
-            mso-page-orientation: portrait;
-            margin: 1.5cm;
+          @page WordSection1 {
+            size: 21cm 29.7cm; /* A4 */
+            margin: 1.5cm 1.5cm 1.5cm 1.5cm;
+            mso-header-margin: .5in;
+            mso-footer-margin: .5in;
+            mso-paper-source: 0;
+          }
+          div.WordSection1 {
+            page: WordSection1;
           }
           body {
-            font-family: Arial, sans-serif;
+            font-family: 'PT Sans', Arial, sans-serif;
+            direction: rtl;
           }
           table {
             border-collapse: collapse;
@@ -251,11 +312,21 @@ export async function exportToWord(docData: DocumentData, fileName:string) {
           td, th {
             border: 1px solid black;
             padding: 8px;
+            text-align: right;
           }
+          .page-container {
+             page-break-after: always;
+          }
+          .page-container:last-child {
+             page-break-after: avoid;
+          }
+          .export-footer { display: none; }
         </style>
       </head>
-      <body>
+      <body lang=AR-SA>
+        <div class=WordSection1>
         ${sourceHTML}
+        </div>
       </body>
       </html>`;
 
@@ -285,3 +356,5 @@ export function exportToExcel(items: DocumentItem[], fileName: string) {
     document.body.removeChild(link);
     URL.revokeObjectURL(link.href);
 }
+
+    
