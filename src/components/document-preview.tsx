@@ -121,7 +121,7 @@ export function DocumentPreview({ formData, isForPdf = false }: DocumentPreviewP
             </div>
             
             <div className="mb-2 text-sm">
-                <p><span className="font-bold">السادة/الشركة:</span> {clientName}</p>
+                <p><span className="font-bold">مقدم إلى:</span> {clientName}</p>
                 <p><span className="font-bold">الموضوع:</span> {subject}</p>
             </div>
 

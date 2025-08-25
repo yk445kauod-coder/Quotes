@@ -10,7 +10,7 @@ import { z } from 'zod';
 export const SmartSuggestionInputSchema = z.object({
     docType: z.string().describe("The type of the document, either 'quote' or 'estimation'."),
     subject: z.string().describe("The main subject of the document, e.g., 'توريد وتركيب كاميرات مراقبة'."),
-    clientName: z.string().describe("The name of the client or company."),
+    clientName: z.string().describe("The name of the client or entity."),
 });
 
 export const SmartSuggestionOutputSchema = z.object({

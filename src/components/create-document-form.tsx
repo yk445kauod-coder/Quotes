@@ -347,9 +347,9 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
                 name="clientName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>السادة/الشركة (اسم الجهة)</FormLabel>
+                    <FormLabel>مقدم إلى (الجهة)</FormLabel>
                     <FormControl>
-                      <Input placeholder="اسم العميل أو الشركة" {...field} />
+                      <Input placeholder="اسم العميل أو الجهة" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
