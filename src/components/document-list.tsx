@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -27,7 +28,6 @@ import {
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
   DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, Trash2, Edit, FileDown, Loader2, Search } from "lucide-react";
@@ -40,51 +40,35 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
 import type { DocumentData } from "@/lib/types";
-import { getDocuments, deleteDocument } from "@/lib/firebase-client";
+import { deleteDocument, subscribeToDocuments } from "@/lib/firebase-client";
 import { exportToPdf, exportToWord, exportToExcel } from "@/lib/export";
 import { DocumentPreview } from "./document-preview";
 
-export function DocumentList() {
-  const [documents, setDocuments] = useState<DocumentData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+interface DocumentListProps {
+  initialDocuments: DocumentData[];
+}
+
+export function DocumentList({ initialDocuments }: DocumentListProps) {
+  const [documents, setDocuments] = useState<DocumentData[]>(initialDocuments);
+  const [loading, setLoading] = useState(false); // No initial loading
   const { toast } = useToast();
   const [exportingDoc, setExportingDoc] = useState<DocumentData | null>(null);
   const exportContainerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
 
-
   useEffect(() => {
-    const fetchDocuments = async () => {
-      try {
-        setLoading(true);
-        const unsubscribe = getDocuments((docs) => {
-          setDocuments(docs);
-          setLoading(false);
-        });
-        // In a real app, you might want to return the unsubscribe function
-        // from the useEffect cleanup to stop listening when the component unmounts.
-        // For simplicity, we're not doing that here.
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : "فشل في جلب المستندات.";
-        setError(errorMessage);
-        setLoading(false);
-        toast({
-          variant: "destructive",
-          title: "خطأ",
-          description: errorMessage,
-        });
-      }
-    };
-
-    fetchDocuments();
-  }, [toast]);
+    // Subscribe to real-time updates after the initial server render
+    const unsubscribe = subscribeToDocuments((docs) => {
+      setDocuments(docs);
+    });
+    // Cleanup subscription on component unmount
+    return () => unsubscribe();
+  }, []);
   
   const handleEdit = (id: string) => {
     router.push(`/edit/${id}`);
@@ -149,24 +133,6 @@ export function DocumentList() {
     }
   );
 
-
-  if (loading) {
-    return (
-        <div className="flex justify-center items-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin" />
-        </div>
-    )
-  }
-  
-  if (error) {
-     return (
-      <div className="text-center text-red-500 py-8">
-        <p>حدث خطأ أثناء تحميل المستندات:</p>
-        <p>{error}</p>
-      </div>
-    );
-  }
-
   return (
     <Card>
       <CardHeader>
@@ -185,7 +151,11 @@ export function DocumentList() {
         </div>
       </CardHeader>
       <CardContent>
-        {documents.length === 0 ? (
+        {loading ? (
+            <div className="flex justify-center items-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+        ) : documents.length === 0 ? (
            <div className="text-center text-gray-500 py-8">
             <p>لا توجد مستندات لعرضها.</p>
             <p>ابدأ بإنشاء مستند جديد.</p>
@@ -293,8 +263,8 @@ export function DocumentList() {
         {/* Hidden container for exporting */}
         {exportingDoc && (
           <div className="hidden">
-            <div ref={exportContainerRef}>
-              <DocumentPreview formData={exportingDoc} isForPdf={true} />
+            <div ref={exportContainerRef} style={{ width: '210mm' }}>
+                <DocumentPreview formData={exportingDoc} isForPdf={true} />
             </div>
           </div>
         )}

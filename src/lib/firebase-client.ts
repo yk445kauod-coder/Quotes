@@ -1,6 +1,6 @@
 // This file contains client-side Firebase operations
 import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
-import { getDatabase, ref, get, push, remove, set, onValue, query, orderByChild, update, Database } from "firebase/database";
+import { getDatabase, ref, push, remove, set, onValue, query, orderByChild, update, get, Database } from "firebase/database";
 import type { DocumentData, SettingsData } from "./types";
 import { firebaseConfig } from "./firebase-config";
 
@@ -20,16 +20,14 @@ function initializeDb() {
   }
 }
 
-
 /**
- * Gets documents from Realtime Database and listens for changes.
+ * Subscribes to document changes from Realtime Database.
  * @param callback Function to call with the documents array whenever data changes.
  * @returns An unsubscribe function to stop listening for updates.
  */
-export function getDocuments(callback: (documents: DocumentData[]) => void): () => void {
+export function subscribeToDocuments(callback: (documents: DocumentData[]) => void): () => void {
   initializeDb();
   const documentsRef = ref(db, "documents");
-  // Query to get the latest documents, ordered by creation time
   const recentDocumentsQuery = query(documentsRef, orderByChild('createdAt'));
 
   const unsubscribe = onValue(recentDocumentsQuery, (snapshot) => {
@@ -43,26 +41,11 @@ export function getDocuments(callback: (documents: DocumentData[]) => void): () 
       callback([]);
     }
   }, (error) => {
-    console.error("Error fetching documents:", error);
-    callback([]); // Send empty array on error
+    console.error("Error subscribing to documents:", error);
+    callback([]);
   });
 
   return unsubscribe;
-}
-
-/**
- * Gets a single document by its ID from the Realtime Database.
- * @param id The unique key of the document to fetch.
- * @returns The document data or null if not found.
- */
-export async function getDocumentById(id: string): Promise<DocumentData | null> {
-    initializeDb();
-    const documentRef = ref(db, `documents/${id}`);
-    const snapshot = await get(documentRef);
-    if (snapshot.exists()) {
-        return { ...snapshot.val(), id: snapshot.key } as DocumentData;
-    }
-    return null;
 }
 
 
@@ -70,13 +53,11 @@ export async function getDocumentById(id: string): Promise<DocumentData | null> 
  * Saves a new document to the Realtime Database.
  * @param document The document data to save.
  */
-export async function saveDocument(document: Omit<DocumentData, 'id' | 'docId'>): Promise<void> {
+export async function saveDocument(document: Omit<DocumentData, 'id' | 'docId'>): Promise<string> {
   initializeDb();
   const documentsRef = ref(db, "documents");
   const newDocRef = push(documentsRef);
   
-  // Get the next docId - for simplicity, we'll do this on the client.
-  // In a production app, this should be a transaction on the server to prevent race conditions.
   const counterRef = ref(db, `counters/${document.docType}`);
   const snapshot = await get(counterRef);
   const newCount = (snapshot.val()?.count || 0) + 1;
@@ -89,8 +70,8 @@ export async function saveDocument(document: Omit<DocumentData, 'id' | 'docId'>)
   };
 
   await set(newDocRef, docWithRealId);
-  // Also update the counter
   await set(counterRef, { count: newCount });
+  return newDocRef.key!;
 }
 
 /**
@@ -101,7 +82,6 @@ export async function saveDocument(document: Omit<DocumentData, 'id' | 'docId'>)
 export async function updateDocument(id: string, document: DocumentData): Promise<void> {
     initializeDb();
     const documentRef = ref(db, `documents/${id}`);
-    // Omit the 'id' field before updating, as it's the key and not part of the data object.
     const { id: docId, ...dataToUpdate } = document;
     await update(documentRef, dataToUpdate);
 }
@@ -124,26 +104,6 @@ export async function deleteDocument(id: string): Promise<void> {
 // --- Settings Functions ---
 
 /**
- * Gets the application settings from the Realtime Database.
- * @returns The settings data or default values if not found.
- */
-export async function getSettings(): Promise<SettingsData> {
-    initializeDb();
-    const settingsRef = ref(db, 'settings');
-    const snapshot = await get(settingsRef);
-    if (snapshot.exists()) {
-        return snapshot.val();
-    }
-    // Return default values if no settings are found in the DB
-    return {
-        headerImageUrl: "https://ik.imagekit.io/fpbwa3np7/%D8%A8%D8%B1%D9%86%D8%A7%D9%85%D8%AC%20%D8%B9%D8%B1%D9%88%D8%B6%20%D8%A7%D9%84%D8%A7%D8%B3%D8%B9%D8%A7%D8%B1/header%20-%20Copy.png?updatedAt=1755348570527",
-        footerText: "Company Name\nAddress\nPhone & Email",
-        defaultTerms: "الأسعار شاملة الضريبة\nصالحة لمدة 30 يوم\nالتسليم خلال 15 يوم عمل",
-        defaultPaymentMethod: "سيتم تحديدها لاحقاً."
-    };
-}
-
-/**
  * Saves the application settings to the Realtime Database.
  * @param settings The settings data to save.
  */
@@ -151,4 +111,28 @@ export async function saveSettings(settings: SettingsData): Promise<void> {
     initializeDb();
     const settingsRef = ref(db, 'settings');
     await set(settingsRef, settings);
+}
+
+/**
+ * Gets the application settings from the Realtime Database for client-side usage.
+ * @returns A promise resolving to the settings data or default values.
+ */
+export async function getSettings(): Promise<SettingsData> {
+    initializeDb();
+    const settingsRef = ref(db, 'settings');
+    try {
+        const snapshot = await get(settingsRef);
+        if (snapshot.exists()) {
+            return snapshot.val();
+        }
+    } catch (error) {
+        console.error("Client Error fetching settings:", error);
+    }
+    // Return default values if no settings are found or on error
+    return {
+        headerImageUrl: "https://ik.imagekit.io/fpbwa3np7/%D8%A8%D8%B1%D9%86%D8%A7%D9%85%D8%AC%20%D8%B9%D8%B1%D9%88%D8%B6%20%D8%A7%D9%84%D8%A7%D8%B3%D8%B9%D8%A7%D8%B1/header%20-%20Copy.png?updatedAt=1755348570527",
+        footerText: "Company Name\nAddress\nPhone & Email",
+        defaultTerms: "الأسعار شاملة الضريبة\nصالحة لمدة 30 يوم\nالتسليم خلال 15 يوم عمل",
+        defaultPaymentMethod: "سيتم تحديدها لاحقاً."
+    };
 }

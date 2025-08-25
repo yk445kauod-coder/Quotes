@@ -42,9 +42,9 @@ import {
   Wand2,
   Sparkles,
 } from "lucide-react";
-import { saveDocument, updateDocument, getSettings } from "@/lib/firebase-client";
+import { saveDocument, updateDocument } from "@/lib/firebase-client";
 import { formatCurrency } from "@/lib/utils";
-import type { DocumentData } from "@/lib/types";
+import type { DocumentData, SettingsData } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import { exportToPdf, exportToWord, exportToExcel } from "@/lib/export";
@@ -73,14 +73,14 @@ type FormValues = z.infer<typeof formSchema>;
 
 interface CreateDocumentFormProps {
     existingDocument?: DocumentData;
+    defaultSettings?: SettingsData;
 }
 
-export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps) {
+export function CreateDocumentForm({ existingDocument, defaultSettings }: CreateDocumentFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
-  const [isLoadingForm, setIsLoadingForm] = useState(true);
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [isSuggestingItem, setIsSuggestingItem] = useState<number | null>(null);
   const isEditMode = !!existingDocument;
@@ -88,51 +88,21 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      docType: "quote",
-      clientName: "",
-      subject: "",
-      items: [{ description: "", unit: "قطعة", quantity: 1, price: 0 }],
-      terms: "",
-      paymentMethod: "",
-    },
-  });
-
-  useEffect(() => {
-    const loadFormValues = async () => {
-      setIsLoadingForm(true);
-      try {
-        if (isEditMode && existingDocument) {
-          form.reset({
+    defaultValues: isEditMode && existingDocument 
+        ? {
             ...existingDocument,
             terms: existingDocument.terms || "",
             paymentMethod: existingDocument.paymentMethod || "",
-          });
-        } else {
-          // For new documents, fetch default settings
-          const settings = await getSettings();
-          form.reset({
+          }
+        : {
             docType: "quote",
             clientName: "",
             subject: "",
             items: [{ description: "", unit: "قطعة", quantity: 1, price: 0 }],
-            terms: settings.defaultTerms || "",
-            paymentMethod: settings.defaultPaymentMethod || "",
-          });
-        }
-      } catch (error) {
-        toast({
-          variant: "destructive",
-          title: "خطأ في تحميل البيانات",
-          description: "فشل تحميل الإعدادات أو بيانات المستند."
-        });
-      } finally {
-        setIsLoadingForm(false);
-      }
-    };
-
-    loadFormValues();
-  }, [form, isEditMode, existingDocument, toast]);
+            terms: defaultSettings?.defaultTerms || "",
+            paymentMethod: defaultSettings?.defaultPaymentMethod || "",
+        },
+  });
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -295,14 +265,6 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
     }
   };
 
-
-  if (isLoadingForm) {
-      return (
-          <div className="flex justify-center items-center h-96">
-              <Loader2 className="h-8 w-8 animate-spin" />
-          </div>
-      )
-  }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
@@ -541,7 +503,7 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
             </div>
              {/* This div is hidden and used only for PDF export */}
             <div className="hidden">
-                 <div id="document-pdf-export" style={{ width: '210mm', height: '297mm' }}>
+                 <div id="document-pdf-export" style={{ width: '210mm' }}>
                     <DocumentPreview 
                         formData={{...watchedAll, docId: isEditMode && existingDocument ? existingDocument.docId : undefined }} 
                         isForPdf={true} 
