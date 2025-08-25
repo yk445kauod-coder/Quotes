@@ -21,7 +21,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Table,
   TableBody,
@@ -46,8 +45,14 @@ import { saveDocument, updateDocument } from "@/lib/firebase-client";
 import { formatCurrency } from "@/lib/utils";
 import type { DocumentData, SettingsData } from "@/lib/types";
 import { useRouter } from "next/navigation";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { exportToPdf, exportToWord, exportToExcel } from "@/lib/export";
+import 'react-quill/dist/quill.snow.css';
+
+// Dynamically import ReactQuill to avoid SSR issues
+const ReactQuill =
+  typeof window === 'object' ? require('react-quill') : () => false;
+
 
 const formSchema = z.object({
   docType: z.enum(["quote", "estimation"], {
@@ -119,6 +124,22 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
   
   const watchedDocType = form.watch("docType");
   const watchedAll = form.watch();
+
+  const quillModules = useMemo(() => ({
+    toolbar: [
+        ['bold', 'italic', 'underline'],
+        [{'list': 'ordered'}, {'list': 'bullet'}],
+        [{ 'align': [] }],
+        ['clean']
+    ],
+  }), []);
+
+  const quillFormats = [
+      'bold', 'italic', 'underline',
+      'list', 'bullet',
+      'align'
+  ];
+
 
   async function onSubmit(values: FormValues) {
     setIsSaving(true);
@@ -355,7 +376,16 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
                               control={form.control}
                               name={`items.${index}.description`}
                               render={({ field }) => (
-                                <Textarea {...field} placeholder="وصف البند" className="min-w-[150px]" rows={2} />
+                                <FormControl>
+                                    <div className="quill-in-table">
+                                        <ReactQuill
+                                            theme="snow"
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            modules={{toolbar: false}}
+                                        />
+                                    </div>
+                                </FormControl>
                               )}
                             />
                             <Button
@@ -430,44 +460,57 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
                   </Button>
                 </div>
               </div>
+              
+              {watchedDocType === 'quote' && (
+                <>
+                    <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                        <FormLabel htmlFor="terms">الشروط</FormLabel>
+                        <Button type="button" variant="outline" size="sm" onClick={handleSmartSuggestions} disabled={isSuggesting}>
+                            {isSuggesting ? <Loader2 className="ms-2 h-4 w-4 animate-spin" /> : <Wand2 className="ms-2 h-4 w-4" />}
+                            اقتراح ذكي
+                        </Button>
+                        </div>
+                        <FormField
+                            control={form.control}
+                            name="terms"
+                            render={({ field }) => (
+                                <FormControl>
+                                    <ReactQuill
+                                        theme="snow"
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        modules={quillModules}
+                                        formats={quillFormats}
+                                        placeholder="الشروط والأحكام..."
+                                    />
+                                </FormControl>
+                            )}
+                        />
+                    </div>
 
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <FormLabel htmlFor="terms">{watchedDocType === 'quote' ? 'الشروط' : 'ملاحظات'}</FormLabel>
-                   <Button type="button" variant="outline" size="sm" onClick={handleSmartSuggestions} disabled={isSuggesting}>
-                       {isSuggesting ? <Loader2 className="ms-2 h-4 w-4 animate-spin" /> : <Wand2 className="ms-2 h-4 w-4" />}
-                       اقتراح ذكي
-                   </Button>
-                </div>
-                 <FormField
-                  control={form.control}
-                  name="terms"
-                  render={({ field }) => (
-                    <Textarea
-                      id="terms"
-                      placeholder={watchedDocType === 'quote' ? 'الشروط والأحكام...' : 'ملاحظات إضافية...'}
-                      {...field}
-                      rows={4}
-                    />
-                  )}
-                />
-              </div>
+                    <div className="space-y-2">
+                        <FormLabel htmlFor="paymentMethod">طريقة الدفع</FormLabel>
+                        <FormField
+                            control={form.control}
+                            name="paymentMethod"
+                            render={({ field }) => (
+                                <FormControl>
+                                    <ReactQuill
+                                        theme="snow"
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        modules={quillModules}
+                                        formats={quillFormats}
+                                        placeholder="تفاصيل الحسابات البنكية أو طرق الدفع الأخرى..."
+                                    />
+                                </FormControl>
+                            )}
+                        />
+                    </div>
+                </>
+              )}
 
-              <div className="space-y-2">
-                <FormLabel htmlFor="paymentMethod">طريقة الدفع</FormLabel>
-                 <FormField
-                  control={form.control}
-                  name="paymentMethod"
-                  render={({ field }) => (
-                    <Textarea
-                      id="paymentMethod"
-                      placeholder="تفاصيل الحسابات البنكية أو طرق الدفع الأخرى..."
-                      {...field}
-                      rows={4}
-                    />
-                  )}
-                />
-              </div>
 
               <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4">
                  <Button type="button" variant="outline" onClick={() => handleExport('pdf')} disabled={isExporting}>
