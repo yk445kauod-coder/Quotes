@@ -1,25 +1,23 @@
 // This file contains client-side Firebase operations
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getDatabase, ref, get, push, remove, set, onValue, query, orderByChild, update } from "firebase/database";
+import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
+import { getDatabase, ref, get, push, remove, set, onValue, query, orderByChild, update, Database } from "firebase/database";
 import type { DocumentData, SettingsData } from "./types";
+import { firebaseConfig } from "./firebase-config";
 
-// Your web app's Firebase configuration
-const firebaseConfig = {
-    apiKey: "AIzaSyCGL0qAiIp9LiT6jO-Tsvz6v5efBJErFcc",
-    authDomain: "maher-project.firebaseapp.com",
-    databaseURL: "https://maher-project-default-rtdb.firebaseio.com",
-    projectId: "maher-project",
-    storageBucket: "maher-project.firebasestorage.app",
-    messagingSenderId: "266963974491",
-    appId: "1:266963974491:web:ebe7c920ca34bdbcea027e"
-};
+// --- Helper Functions ---
 
-// Initialize Firebase client SDK, but only on the client side
-let db: ReturnType<typeof getDatabase>;
+let app: FirebaseApp;
+let db: Database;
 
-if (typeof window !== 'undefined') {
-  const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-  db = getDatabase(app);
+function initializeDb() {
+  if (typeof window !== 'undefined') {
+    if (!getApps().length) {
+      app = initializeApp(firebaseConfig);
+    } else {
+      app = getApp();
+    }
+    db = getDatabase(app);
+  }
 }
 
 
@@ -29,8 +27,9 @@ if (typeof window !== 'undefined') {
  * @returns An unsubscribe function to stop listening for updates.
  */
 export function getDocuments(callback: (documents: DocumentData[]) => void): () => void {
+  initializeDb();
   const documentsRef = ref(db, "documents");
-  // Query to get the latest 50 documents, ordered by creation time
+  // Query to get the latest documents, ordered by creation time
   const recentDocumentsQuery = query(documentsRef, orderByChild('createdAt'));
 
   const unsubscribe = onValue(recentDocumentsQuery, (snapshot) => {
@@ -57,6 +56,7 @@ export function getDocuments(callback: (documents: DocumentData[]) => void): () 
  * @returns The document data or null if not found.
  */
 export async function getDocumentById(id: string): Promise<DocumentData | null> {
+    initializeDb();
     const documentRef = ref(db, `documents/${id}`);
     const snapshot = await get(documentRef);
     if (snapshot.exists()) {
@@ -71,6 +71,7 @@ export async function getDocumentById(id: string): Promise<DocumentData | null> 
  * @param document The document data to save.
  */
 export async function saveDocument(document: Omit<DocumentData, 'id' | 'docId'>): Promise<void> {
+  initializeDb();
   const documentsRef = ref(db, "documents");
   const newDocRef = push(documentsRef);
   
@@ -98,6 +99,7 @@ export async function saveDocument(document: Omit<DocumentData, 'id' | 'docId'>)
  * @param document The document data to update.
  */
 export async function updateDocument(id: string, document: DocumentData): Promise<void> {
+    initializeDb();
     const documentRef = ref(db, `documents/${id}`);
     // Omit the 'id' field before updating, as it's the key and not part of the data object.
     const { id: docId, ...dataToUpdate } = document;
@@ -110,6 +112,7 @@ export async function updateDocument(id: string, document: DocumentData): Promis
  * @param id The unique key of the document to delete.
  */
 export async function deleteDocument(id: string): Promise<void> {
+  initializeDb();
   if (!id) {
     throw new Error("Document ID is required.");
   }
@@ -125,6 +128,7 @@ export async function deleteDocument(id: string): Promise<void> {
  * @returns The settings data or default values if not found.
  */
 export async function getSettings(): Promise<SettingsData> {
+    initializeDb();
     const settingsRef = ref(db, 'settings');
     const snapshot = await get(settingsRef);
     if (snapshot.exists()) {
@@ -144,8 +148,7 @@ export async function getSettings(): Promise<SettingsData> {
  * @param settings The settings data to save.
  */
 export async function saveSettings(settings: SettingsData): Promise<void> {
+    initializeDb();
     const settingsRef = ref(db, 'settings');
     await set(settingsRef, settings);
 }
-
-    
