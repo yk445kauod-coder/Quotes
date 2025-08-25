@@ -82,44 +82,82 @@
   }
 }
 
-/* Styles for ensuring footer is at the bottom of each PDF page */
+
+/* Styles for PDF/Print Export */
 @media print {
+    @page {
+        size: A4 portrait;
+        margin: 20mm 15mm 30mm 15mm; /* top, right, bottom, left */
+    }
+
     html, body {
-        height: auto;
+        width: 210mm;
+        height: 297mm;
         font-size: 10pt;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .export-container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        margin: 0;
+        padding: 0;
     }
     
-    .pdf-page-container {
-        page-break-after: always;
+    .export-header {
+        /* Will only appear on the first page due to html structure */
+        flex-shrink: 0;
     }
 
-    .pdf-page-container:last-child {
+    .export-footer {
+        position: fixed;
+        bottom: 10mm;
+        left: 15mm;
+        right: 15mm;
+        width: calc(210mm - 30mm); /* A4 width - left/right margin */
+        text-align: center;
+        font-size: 9pt;
+        padding-top: 5px;
+        border-top: 2px solid black;
+    }
+
+    .export-content {
+      flex-grow: 1;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      page-break-inside: auto;
+    }
+    
+    thead {
+        display: table-header-group; /* This is crucial for repeating headers */
+    }
+
+    tbody {
+        display: table-row-group;
+    }
+
+    tr {
+        page-break-inside: avoid;
         page-break-after: auto;
     }
-
-    .pdf-header-placeholder, .pdf-footer-placeholder {
-        height: 120px; /* Adjust based on your header/footer height */
+    
+    td, th {
+      page-break-inside: avoid;
     }
 
-    .pdf-header {
-      /* No longer fixed, will only appear on the first page */
+    .summary-section {
+        page-break-before: auto; /* Try to keep it with the table if possible */
+        page-break-inside: avoid; /* Avoid breaking the summary block itself */
     }
 
-    .pdf-footer {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        width: 100%;
-        border-top: 2px solid black;
-        padding: 8px;
-        text-align: center;
-        background-color: white; /* Ensure it covers content */
-        z-index: 10;
+    /* Hide elements not for printing */
+    .no-print {
+        display: none !important;
     }
 
-    /* Rules to repeat table header on each page */
-    thead { display: table-header-group; }
-    tfoot { display: table-footer-group; }
-    tr { page-break-inside: avoid; }
 }

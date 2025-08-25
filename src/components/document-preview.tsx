@@ -51,7 +51,6 @@ export function DocumentPreview({ formData }: DocumentPreviewProps) {
   const docTypeName = docType === 'quote' ? 'عرض سعر' : 'مقايسة';
   const today = new Date().toLocaleDateString('ar-EG-u-nu-latn', { year: 'numeric', month: '2-digit', day: '2-digit' });
   
-  const validItems = items.filter(item => item.description && item.unit && item.quantity);
   const itemsToRender = (items || []);
   const docIdText = docId ? docId : '[سيتم إنشاؤه عند الحفظ]';
   
@@ -75,7 +74,7 @@ export function DocumentPreview({ formData }: DocumentPreviewProps) {
   }
 
   return (
-    <div id="document-preview" className="bg-white text-black font-body text-sm flex flex-col p-8 rounded-lg shadow-lg aspect-[1/1.414]">
+    <div id="document-preview" className="bg-white text-black font-body text-sm flex flex-col p-8 rounded-lg shadow-lg">
         <header className="w-full mb-4">
             {settings?.headerImageUrl && (
                 <Image
@@ -106,7 +105,7 @@ export function DocumentPreview({ formData }: DocumentPreviewProps) {
         </div>
 
         <main className="flex-grow flex flex-col">
-            <div className="flex-grow">
+            <div className="flex-grow overflow-auto">
                 <table className="w-full border-collapse text-right document-preview-table mb-2 text-xs">
                     <thead>
                         <tr className="bg-gray-100">
