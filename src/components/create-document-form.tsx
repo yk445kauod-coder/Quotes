@@ -42,13 +42,21 @@ import {
   Loader2,
   Wand2,
 } from "lucide-react";
-import { getSmartSuggestions } from "@/ai/flows/smart-suggestion-tool";
-import { getItemDescriptionSuggestion } from "@/ai/flows/item-description-suggestion-flow";
 import { saveDocument, updateDocument, getSettings } from "@/lib/firebase-client";
 import { formatCurrency } from "@/lib/utils";
 import type { DocumentData, DocumentType } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import React, { useState, useEffect } from "react";
+
+// Electron API types - declare it on the window object
+declare global {
+    interface Window {
+        electronAPI: {
+            getSmartSuggestions: (args: { documentType: DocumentType; documentDetails: string; }) => Promise<{ termsAndConditions: string; paymentMethods: string; }>;
+            getItemDescriptionSuggestion: (args: { itemQuery: string; documentContext: string; }) => Promise<{ description: string; }>;
+        }
+    }
+}
 
 
 const formSchema = z.object({
@@ -189,7 +197,7 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
     setIsSuggesting(true);
     try {
       const documentDetails = `العميل: ${form.getValues("clientName")}, الموضوع: ${form.getValues("subject")}, البنود: ${form.getValues("items").map(i => i.description).join(', ')}`;
-      const result = await getSmartSuggestions({
+      const result = await window.electronAPI.getSmartSuggestions({
         documentType: form.getValues("docType") as DocumentType,
         documentDetails,
       });
@@ -223,7 +231,7 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
     setSuggestingItemIndex(index);
     try {
         const documentContext = `العميل: ${form.getValues("clientName")}, الموضوع: ${form.getValues("subject")}`;
-        const result = await getItemDescriptionSuggestion({
+        const result = await window.electronAPI.getItemDescriptionSuggestion({
             itemQuery,
             documentContext,
         });

@@ -1,6 +1,8 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const isDev = require('electron-is-dev');
+const { getSmartSuggestions } = require('../src/ai/flows/smart-suggestion-tool');
+const { getItemDescriptionSuggestion } = require('../src/ai/flows/item-description-suggestion-flow');
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -23,6 +25,16 @@ function createWindow() {
     win.webContents.openDevTools();
   }
 }
+
+// Handle IPC calls from the renderer process
+ipcMain.handle('getSmartSuggestions', async (event, args) => {
+  return await getSmartSuggestions(args);
+});
+
+ipcMain.handle('getItemDescriptionSuggestion', async (event, args) => {
+  return await getItemDescriptionSuggestion(args);
+});
+
 
 app.whenReady().then(() => {
   createWindow();
