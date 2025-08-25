@@ -7,6 +7,13 @@ import { getDocumentById } from "@/lib/firebase-client";
 import type { DocumentData } from "@/lib/types";
 import { Loader2 } from "lucide-react";
 
+// This function is required for static export with dynamic routes.
+// It tells Next.js not to pre-render any specific pages at build time.
+// The client will handle rendering based on the dynamic ID.
+export async function generateStaticParams() {
+  return [];
+}
+
 export default function EditPage() {
   const params = useParams();
   const id = params.id as string;
