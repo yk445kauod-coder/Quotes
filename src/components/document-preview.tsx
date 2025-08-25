@@ -98,7 +98,7 @@ export function DocumentPreview({ formData, isForPdf = false }: DocumentPreviewP
 
   return (
     <PageWrapper {...pageWrapperProps}>
-        <div id="document-preview" className="bg-white text-black font-body text-sm h-full overflow-hidden flex flex-col p-4">
+        <div id="document-preview" className="bg-white text-black font-body text-sm h-full flex flex-col p-4 overflow-auto">
             <header className="w-full mb-4 pdf-header">
                 {settings?.headerImageUrl && (
                     <Image
