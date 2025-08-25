@@ -36,28 +36,15 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Trash2,
   PlusCircle,
-  Sparkles,
   Save,
   FileDown,
   Loader2,
-  Wand2,
 } from "lucide-react";
 import { saveDocument, updateDocument, getSettings } from "@/lib/firebase-client";
 import { formatCurrency } from "@/lib/utils";
-import type { DocumentData, DocumentType } from "@/lib/types";
+import type { DocumentData } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import React, { useState, useEffect } from "react";
-
-// Electron API types - declare it on the window object
-declare global {
-    interface Window {
-        electronAPI: {
-            getSmartSuggestions: (args: { documentType: DocumentType; documentDetails: string; }) => Promise<{ termsAndConditions: string; paymentMethods: string; }>;
-            getItemDescriptionSuggestion: (args: { itemQuery: string; documentContext: string; }) => Promise<{ description: string; }>;
-        }
-    }
-}
-
 
 const formSchema = z.object({
   docType: z.enum(["quote", "estimation"], {
@@ -89,10 +76,8 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
   const { toast } = useToast();
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
-  const [isSuggesting, setIsSuggesting] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
   const [isLoadingForm, setIsLoadingForm] = useState(true);
-  const [suggestingItemIndex, setSuggestingItemIndex] = useState<number | null>(null);
   const isEditMode = !!existingDocument;
 
 
@@ -201,64 +186,6 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
       });
     } finally {
       setIsSaving(false);
-    }
-  }
-
-  async function handleGetSuggestions() {
-    setIsSuggesting(true);
-    try {
-      const documentDetails = `العميل: ${form.getValues("clientName")}, الموضوع: ${form.getValues("subject")}, البنود: ${form.getValues("items").map(i => i.description).join(', ')}`;
-      const result = await window.electronAPI.getSmartSuggestions({
-        documentType: form.getValues("docType") as DocumentType,
-        documentDetails,
-      });
-      form.setValue("terms", result.termsAndConditions);
-      form.setValue("paymentMethod", result.paymentMethods);
-      toast({
-        title: "تم جلب الاقتراحات",
-        description: "تم تحديث حقول الشروط وطرق الدفع.",
-      });
-    } catch (error) {
-       toast({
-        variant: "destructive",
-        title: "خطأ",
-        description: error instanceof Error ? error.message : "فشل في جلب الاقتراحات.",
-      });
-    } finally {
-      setIsSuggesting(false);
-    }
-  }
-
-  async function handleGetItemDescription(index: number) {
-    const itemQuery = form.getValues(`items.${index}.description`);
-    if (!itemQuery) {
-        toast({
-            variant: "destructive",
-            title: "خطأ",
-            description: "يرجى كتابة كلمة أو كلمتين عن البند أولاً.",
-        });
-        return;
-    }
-    setSuggestingItemIndex(index);
-    try {
-        const documentContext = `العميل: ${form.getValues("clientName")}, الموضوع: ${form.getValues("subject")}`;
-        const result = await window.electronAPI.getItemDescriptionSuggestion({
-            itemQuery,
-            documentContext,
-        });
-        form.setValue(`items.${index}.description`, result.description);
-        toast({
-            title: "تم اقتراح الوصف",
-            description: "تم تحديث وصف البند.",
-        });
-    } catch(error) {
-        toast({
-            variant: "destructive",
-            title: "خطأ",
-            description: error instanceof Error ? error.message : "فشل في اقتراح الوصف.",
-        });
-    } finally {
-        setSuggestingItemIndex(null);
     }
   }
 
@@ -375,7 +302,7 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
                         <TableHead className="p-2 text-right">الكمية</TableHead>
                         <TableHead className="p-2 text-right">السعر</TableHead>
                         <TableHead className="p-2 text-right">الإجمالي</TableHead>
-                        <TableHead className="w-[80px] p-2 text-center">أدوات</TableHead>
+                        <TableHead className="w-[40px] p-2 text-center">أدوات</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -424,32 +351,16 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
                             )}
                           </TableCell>
                           <TableCell className="p-1 align-middle text-center">
-                            <div className="flex flex-col items-center gap-1">
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleGetItemDescription(index)}
-                                  disabled={suggestingItemIndex === index}
-                                  title="اقتراح وصف"
-                                >
-                                  {suggestingItemIndex === index ? (
-                                     <Loader2 className="h-4 w-4 animate-spin" />
-                                  ) : (
-                                     <Wand2 className="h-4 w-4 text-primary" />
-                                  )}
-                                </Button>
-                                <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => remove(index)}
-                                disabled={fields.length <= 1}
-                                title="حذف البند"
-                                >
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                                </Button>
-                            </div>
+                            <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => remove(index)}
+                            disabled={fields.length <= 1}
+                            title="حذف البند"
+                            >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -471,20 +382,6 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <FormLabel htmlFor="terms">{watchedDocType === 'quote' ? 'الشروط' : 'ملاحظات'}</FormLabel>
-                   <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleGetSuggestions}
-                    disabled={isSuggesting}
-                  >
-                    {isSuggesting ? (
-                      <Loader2 className="ms-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Sparkles className="ms-2 h-4 w-4" />
-                    )}
-                    اقتراح ذكي
-                  </Button>
                 </div>
                  <FormField
                   control={form.control}

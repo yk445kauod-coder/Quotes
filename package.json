@@ -3,21 +3,14 @@
   "name": "nextn",
   "version": "0.1.0",
   "private": true,
-  "main": "electron/main.js",
   "scripts": {
     "dev": "next dev --turbopack -p 9003",
-    "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
-    "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit",
-    "electron:dev": "concurrently -k \"npm:dev\" \"wait-on http://localhost:9003 && electron .\"",
-    "electron:dist": "npm run build && electron-builder"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@genkit-ai/googleai": "^1.14.1",
-    "@genkit-ai/next": "^1.14.1",
     "@hookform/resolvers": "^4.1.3",
     "@radix-ui/react-accordion": "^1.2.3",
     "@radix-ui/react-alert-dialog": "^1.1.6",
@@ -46,8 +39,6 @@
     "dotenv": "^16.5.0",
     "embla-carousel-react": "^8.6.0",
     "firebase": "^10.12.2",
-    "firebase-admin": "^12.1.1",
-    "genkit": "^1.14.1",
     "html2pdf.js": "^0.10.1",
     "lucide-react": "^0.475.0",
     "next": "15.3.3",
@@ -65,34 +56,8 @@
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "concurrently": "^8.2.2",
-    "electron": "^31.2.1",
-    "electron-builder": "^24.13.3",
-    "electron-is-dev": "^3.0.1",
-    "genkit-cli": "^1.14.1",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5",
-    "wait-on": "^7.2.0"
-  },
-  "build": {
-    "appId": "com.example.al-masria-e-quotes",
-    "productName": "Al-Masria E-Quotes",
-    "files": [
-      "out/**/*",
-      "electron/**/*",
-      "src/**/*",
-      "next.config.js",
-      "*.js",
-      "*.json",
-      "*.ts"
-    ],
-    "directories": {
-      "buildResources": "assets",
-      "output": "dist"
-    },
-    "win": {
-      "target": "nsis"
-    }
+    "typescript": "^5"
   }
 }
