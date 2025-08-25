@@ -1,7 +1,27 @@
 // This file contains client-side Firebase operations
-import { db } from "./firebase";
-import { ref, get, push, remove, set, onValue, query, orderByChild, update } from "firebase/database";
+import { initializeApp, getApps, getApp } from "firebase/app";
+import { getDatabase, ref, get, push, remove, set, onValue, query, orderByChild, update } from "firebase/database";
 import type { DocumentData, SettingsData } from "./types";
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+    apiKey: "AIzaSyCGL0qAiIp9LiT6jO-Tsvz6v5efBJErFcc",
+    authDomain: "maher-project.firebaseapp.com",
+    databaseURL: "https://maher-project-default-rtdb.firebaseio.com",
+    projectId: "maher-project",
+    storageBucket: "maher-project.firebasestorage.app",
+    messagingSenderId: "266963974491",
+    appId: "1:266963974491:web:ebe7c920ca34bdbcea027e"
+};
+
+// Initialize Firebase client SDK, but only on the client side
+let db: ReturnType<typeof getDatabase>;
+
+if (typeof window !== 'undefined') {
+  const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+  db = getDatabase(app);
+}
+
 
 /**
  * Gets documents from Realtime Database and listens for changes.
