@@ -1,6 +1,6 @@
 // This file contains SERVER-SIDE Firebase operations
 import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
-import { getDatabase, ref, get, query, orderByChild, Database } from "firebase/database";
+import { getDatabase, ref, get, query, Database } from "firebase/database";
 import type { DocumentData, SettingsData } from "./types";
 import { firebaseConfig } from "./firebase-config";
 import "server-only";
@@ -26,10 +26,11 @@ function initializeDbServer() {
 export async function getDocuments(): Promise<DocumentData[]> {
   initializeDbServer();
   const documentsRef = ref(db, "documents");
-  const recentDocumentsQuery = query(documentsRef, orderByChild('createdAt'));
+  // Removed orderByChild to prevent indexing error. Sorting is now done in the application code.
+  const documentsQuery = query(documentsRef);
 
   try {
-    const snapshot = await get(recentDocumentsQuery);
+    const snapshot = await get(documentsQuery);
     if (snapshot.exists()) {
       const data = snapshot.val();
       const documentList: DocumentData[] = Object.keys(data)

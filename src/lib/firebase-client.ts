@@ -1,6 +1,6 @@
 // This file contains client-side Firebase operations
 import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
-import { getDatabase, ref, push, remove, set, onValue, query, orderByChild, update, get, Database } from "firebase/database";
+import { getDatabase, ref, push, remove, set, onValue, query, update, get, Database } from "firebase/database";
 import type { DocumentData, SettingsData } from "./types";
 import { firebaseConfig } from "./firebase-config";
 
@@ -28,9 +28,10 @@ function initializeDb() {
 export function subscribeToDocuments(callback: (documents: DocumentData[]) => void): () => void {
   initializeDb();
   const documentsRef = ref(db, "documents");
-  const recentDocumentsQuery = query(documentsRef, orderByChild('createdAt'));
+  // Removed orderByChild to prevent indexing error. Sorting is now done on the client.
+  const documentsQuery = query(documentsRef);
 
-  const unsubscribe = onValue(recentDocumentsQuery, (snapshot) => {
+  const unsubscribe = onValue(documentsQuery, (snapshot) => {
     if (snapshot.exists()) {
       const data = snapshot.val();
       const documentList: DocumentData[] = Object.keys(data)
