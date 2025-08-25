@@ -29,17 +29,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>المستندات</CardTitle>
-          <CardDescription>
-            قائمة بأحدث عروض الأسعار والمقايسات.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <DocumentList />
-        </CardContent>
-      </Card>
+      <DocumentList />
+      
     </div>
   );
 }

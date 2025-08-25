@@ -10,8 +10,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,7 +30,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Trash2, Edit, FileDown, Loader2 } from "lucide-react";
+import { MoreHorizontal, Trash2, Edit, FileDown, Loader2, Search } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,6 +57,7 @@ export function DocumentList() {
   const [exportingDoc, setExportingDoc] = useState<DocumentData | null>(null);
   const exportContainerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState("");
 
 
   useEffect(() => {
@@ -130,6 +139,16 @@ export function DocumentList() {
     }
   };
 
+  const filteredDocuments = documents.filter(doc => {
+      const query = searchQuery.toLowerCase();
+      return (
+        doc.docId.toLowerCase().includes(query) ||
+        doc.clientName.toLowerCase().includes(query) ||
+        doc.subject.toLowerCase().includes(query)
+      );
+    }
+  );
+
 
   if (loading) {
     return (
@@ -148,117 +167,138 @@ export function DocumentList() {
     );
   }
 
-  if (documents.length === 0) {
-    return (
-      <div className="text-center text-gray-500 py-8">
-        <p>لا توجد مستندات لعرضها.</p>
-        <p>ابدأ بإنشاء مستند جديد.</p>
-      </div>
-    );
-  }
-
   return (
-    <>
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>رقم المستند</TableHead>
-            <TableHead>العميل</TableHead>
-            <TableHead>الموضوع</TableHead>
-            <TableHead>النوع</TableHead>
-            <TableHead>التاريخ</TableHead>
-            <TableHead className="text-left">الإجمالي</TableHead>
-            <TableHead>
-              <span className="sr-only">Actions</span>
-            </TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {documents.map((doc) => (
-            <TableRow key={doc.id}>
-              <TableCell className="font-medium">{doc.docId}</TableCell>
-              <TableCell>{doc.clientName}</TableCell>
-              <TableCell>{doc.subject}</TableCell>
-              <TableCell>
-                <Badge variant={doc.docType === 'quote' ? 'default' : 'secondary'}>
-                  {doc.docType === 'quote' ? 'عرض سعر' : 'مقايسة'}
-                </Badge>
-              </TableCell>
-              <TableCell>{new Date(doc.createdAt).toLocaleDateString('ar-EG')}</TableCell>
-              <TableCell className="text-left">{formatCurrency(doc.total)}</TableCell>
-              <TableCell>
-                <AlertDialog>
-                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button aria-haspopup="true" size="icon" variant="ghost">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Toggle menu</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleEdit(doc.id)}>
-                        <Edit className="me-2 h-4 w-4" />
-                        تعديل
-                      </DropdownMenuItem>
-                      
-                       <DropdownMenuSub>
-                          <DropdownMenuSubTrigger>
-                            <FileDown className="me-2 h-4 w-4" />
-                            <span>تصدير</span>
-                          </DropdownMenuSubTrigger>
-                          <DropdownMenuPortal>
-                             <DropdownMenuSubContent>
-                                <DropdownMenuItem onClick={() => handleExport(doc, 'pdf')}>
-                                  <span>تصدير PDF</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleExport(doc, 'word')}>
-                                  <span>تصدير Word</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleExport(doc, 'excel')}>
-                                  <span>تصدير Excel</span>
-                                </DropdownMenuItem>
-                             </DropdownMenuSubContent>
-                          </DropdownMenuPortal>
-                       </DropdownMenuSub>
-
-                       <AlertDialogTrigger asChild>
-                        <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10">
-                          <Trash2 className="me-2 h-4 w-4" />
-                          حذف
-                        </DropdownMenuItem>
-                      </AlertDialogTrigger>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>هل أنت متأكد تماماً؟</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        هذا الإجراء لا يمكن التراجع عنه. سيؤدي هذا إلى حذف المستند بشكل دائم من خوادمنا.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>إلغاء</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => handleDelete(doc.id)}>
-                        متابعة
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
-    {/* Hidden container for exporting */}
-    {exportingDoc && (
-      <div className="hidden">
-        <div ref={exportContainerRef}>
-          <DocumentPreview formData={exportingDoc} isForPdf={true} />
+    <Card>
+      <CardHeader>
+        <CardTitle>المستندات</CardTitle>
+        <CardDescription>
+            قائمة بأحدث عروض الأسعار والمقايسات.
+        </CardDescription>
+         <div className="relative pt-2">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="ابحث عن مستند (بالرقم، العميل، أو الموضوع)..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10"
+            />
         </div>
-      </div>
-    )}
-    </>
+      </CardHeader>
+      <CardContent>
+        {documents.length === 0 ? (
+           <div className="text-center text-gray-500 py-8">
+            <p>لا توجد مستندات لعرضها.</p>
+            <p>ابدأ بإنشاء مستند جديد.</p>
+          </div>
+        ) : (
+          <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>رقم المستند</TableHead>
+                <TableHead>العميل</TableHead>
+                <TableHead>الموضوع</TableHead>
+                <TableHead>النوع</TableHead>
+                <TableHead>التاريخ</TableHead>
+                <TableHead className="text-left">الإجمالي</TableHead>
+                <TableHead>
+                  <span className="sr-only">Actions</span>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredDocuments.map((doc) => (
+                <TableRow key={doc.id}>
+                  <TableCell className="font-medium">{doc.docId}</TableCell>
+                  <TableCell>{doc.clientName}</TableCell>
+                  <TableCell>{doc.subject}</TableCell>
+                  <TableCell>
+                    <Badge variant={doc.docType === 'quote' ? 'default' : 'secondary'}>
+                      {doc.docType === 'quote' ? 'عرض سعر' : 'مقايسة'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{new Date(doc.createdAt).toLocaleDateString('ar-EG')}</TableCell>
+                  <TableCell className="text-left">{formatCurrency(doc.total)}</TableCell>
+                  <TableCell>
+                    <AlertDialog>
+                       <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button aria-haspopup="true" size="icon" variant="ghost">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Toggle menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleEdit(doc.id)}>
+                            <Edit className="me-2 h-4 w-4" />
+                            تعديل
+                          </DropdownMenuItem>
+                          
+                           <DropdownMenuSub>
+                              <DropdownMenuSubTrigger>
+                                <FileDown className="me-2 h-4 w-4" />
+                                <span>تصدير</span>
+                              </DropdownMenuSubTrigger>
+                              <DropdownMenuPortal>
+                                 <DropdownMenuSubContent>
+                                    <DropdownMenuItem onClick={() => handleExport(doc, 'pdf')}>
+                                      <span>تصدير PDF</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleExport(doc, 'word')}>
+                                      <span>تصدير Word</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleExport(doc, 'excel')}>
+                                      <span>تصدير Excel</span>
+                                    </DropdownMenuItem>
+                                 </DropdownMenuSubContent>
+                              </DropdownMenuPortal>
+                           </DropdownMenuSub>
+
+                           <AlertDialogTrigger asChild>
+                            <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10">
+                              <Trash2 className="me-2 h-4 w-4" />
+                              حذف
+                            </DropdownMenuItem>
+                          </AlertDialogTrigger>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>هل أنت متأكد تماماً؟</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            هذا الإجراء لا يمكن التراجع عنه. سيؤدي هذا إلى حذف المستند بشكل دائم من خوادمنا.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDelete(doc.id)}>
+                            متابعة
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+           {filteredDocuments.length === 0 && searchQuery && (
+             <div className="text-center text-gray-500 py-8">
+               <p>لا توجد نتائج بحث تطابق "{searchQuery}".</p>
+             </div>
+           )}
+        </div>
+        )}
+       
+        {/* Hidden container for exporting */}
+        {exportingDoc && (
+          <div className="hidden">
+            <div ref={exportContainerRef}>
+              <DocumentPreview formData={exportingDoc} isForPdf={true} />
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
