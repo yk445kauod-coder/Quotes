@@ -7,7 +7,6 @@ import type { DocumentType, SettingsData } from "@/lib/types";
 import React, { useState, useEffect } from "react";
 import { getSettings } from "@/lib/firebase-client";
 import { Skeleton } from "./ui/skeleton";
-import 'react-quill/dist/quill.snow.css';
 
 
 interface DocumentPreviewProps {
@@ -146,7 +145,7 @@ export function DocumentPreview({ formData, isForPdf = false }: DocumentPreviewP
                             {itemsToRender.map((item, index) => (
                                 <tr key={index}>
                                     <td className="border p-1 align-top">{index + 1}</td>
-                                    <td className="border p-1 align-top whitespace-pre-wrap ql-editor" dangerouslySetInnerHTML={{ __html: item.description || ''}}></td>
+                                    <td className="border p-1 align-top whitespace-pre-wrap">{item.description || ''}</td>
                                     <td className="border p-1 align-top">{item.unit}</td>
                                     <td className="border p-1 align-top">{item.quantity}</td>
                                     <td className="border p-1 align-top">{formatCurrency(item.price || 0)}</td>
@@ -162,9 +161,9 @@ export function DocumentPreview({ formData, isForPdf = false }: DocumentPreviewP
                         {docType === 'quote' && (
                             <>
                                 <h3 className="font-bold text-sm mb-1">الشروط:</h3>
-                                <div className="ql-editor" dangerouslySetInnerHTML={{ __html: terms || ''}}></div>
+                                <div className="whitespace-pre-wrap">{terms || ''}</div>
                                 <h3 className="font-bold text-sm mt-2 mb-1">طريقة الدفع:</h3>
-                                <div className="ql-editor" dangerouslySetInnerHTML={{ __html: paymentMethod || ''}}></div>
+                                <div className="whitespace-pre-wrap">{paymentMethod || ''}</div>
                             </>
                         )}
                     </div>

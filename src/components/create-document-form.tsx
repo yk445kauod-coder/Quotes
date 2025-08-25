@@ -45,13 +45,9 @@ import { saveDocument, updateDocument } from "@/lib/firebase-client";
 import { formatCurrency } from "@/lib/utils";
 import type { DocumentData, SettingsData } from "@/lib/types";
 import { useRouter } from "next/navigation";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { exportToPdf, exportToWord, exportToExcel } from "@/lib/export";
-import 'react-quill/dist/quill.snow.css';
-import dynamic from 'next/dynamic';
-
-// Dynamically import ReactQuill to disable SSR and prevent hydration errors
-const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
+import { Textarea } from "./ui/textarea";
 
 
 const formSchema = z.object({
@@ -124,21 +120,6 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
   
   const watchedDocType = form.watch("docType");
   const watchedAll = form.watch();
-
-  const quillModules = useMemo(() => ({
-    toolbar: [
-        ['bold', 'italic', 'underline'],
-        [{'list': 'ordered'}, {'list': 'bullet'}],
-        [{ 'align': [] }],
-        ['clean']
-    ],
-  }), []);
-
-  const quillFormats = [
-      'bold', 'italic', 'underline',
-      'list', 'bullet',
-      'align'
-  ];
 
 
   async function onSubmit(values: FormValues) {
@@ -377,14 +358,7 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
                               name={`items.${index}.description`}
                               render={({ field }) => (
                                 <FormControl>
-                                    <div className="quill-in-table">
-                                        <ReactQuill
-                                            theme="snow"
-                                            value={field.value}
-                                            onChange={field.onChange}
-                                            modules={{toolbar: false}}
-                                        />
-                                    </div>
+                                    <Textarea {...field} placeholder="وصف البند" className="min-h-[60px]" />
                                 </FormControl>
                               )}
                             />
@@ -476,14 +450,7 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
                             name="terms"
                             render={({ field }) => (
                                 <FormControl>
-                                    <ReactQuill
-                                        theme="snow"
-                                        value={field.value}
-                                        onChange={field.onChange}
-                                        modules={quillModules}
-                                        formats={quillFormats}
-                                        placeholder="الشروط والأحكام..."
-                                    />
+                                    <Textarea {...field} rows={5} placeholder="الشروط والأحكام..." />
                                 </FormControl>
                             )}
                         />
@@ -496,14 +463,7 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
                             name="paymentMethod"
                             render={({ field }) => (
                                 <FormControl>
-                                    <ReactQuill
-                                        theme="snow"
-                                        value={field.value}
-                                        onChange={field.onChange}
-                                        modules={quillModules}
-                                        formats={quillFormats}
-                                        placeholder="تفاصيل الحسابات البنكية أو طرق الدفع الأخرى..."
-                                    />
+                                     <Textarea {...field} rows={4} placeholder="تفاصيل الحسابات البنكية أو طرق الدفع الأخرى..." />
                                 </FormControl>
                             )}
                         />
