@@ -1,3 +1,5 @@
+"use client";
+
 import type { DocumentItem } from "./types";
 import { getSettings } from "./firebase-client";
 

@@ -91,47 +91,58 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
   const [isSaving, setIsSaving] = useState(false);
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
+  const [isLoadingForm, setIsLoadingForm] = useState(true);
   const [suggestingItemIndex, setSuggestingItemIndex] = useState<number | null>(null);
   const isEditMode = !!existingDocument;
 
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: async () => {
-      if (isEditMode && existingDocument) {
-        return {
-          ...existingDocument,
-          terms: existingDocument.terms || "",
-          paymentMethod: existingDocument.paymentMethod || "",
-        };
-      }
-      // For new documents, fetch default settings
+    defaultValues: {
+      docType: "quote",
+      clientName: "",
+      subject: "",
+      items: [{ description: "", unit: "قطعة", quantity: 1, price: 0 }],
+      terms: "",
+      paymentMethod: "",
+    },
+  });
+
+  useEffect(() => {
+    const loadFormValues = async () => {
+      setIsLoadingForm(true);
       try {
-        const settings = await getSettings();
-        return {
-          docType: "quote",
-          clientName: "",
-          subject: "",
-          items: [{ description: "", unit: "قطعة", quantity: 1, price: 0 }],
-          terms: settings.defaultTerms || "",
-          paymentMethod: settings.defaultPaymentMethod || "",
-        };
+        if (isEditMode && existingDocument) {
+          form.reset({
+            ...existingDocument,
+            terms: existingDocument.terms || "",
+            paymentMethod: existingDocument.paymentMethod || "",
+          });
+        } else {
+          // For new documents, fetch default settings
+          const settings = await getSettings();
+          form.reset({
+            docType: "quote",
+            clientName: "",
+            subject: "",
+            items: [{ description: "", unit: "قطعة", quantity: 1, price: 0 }],
+            terms: settings.defaultTerms || "",
+            paymentMethod: settings.defaultPaymentMethod || "",
+          });
+        }
       } catch (error) {
         toast({
           variant: "destructive",
-          title: "خطأ في تحميل الإعدادات الافتراضية",
+          title: "خطأ في تحميل البيانات",
+          description: "فشل تحميل الإعدادات أو بيانات المستند."
         });
-        return {
-          docType: "quote",
-          clientName: "",
-          subject: "",
-          items: [{ description: "", unit: "قطعة", quantity: 1, price: 0 }],
-          terms: "",
-          paymentMethod: "",
-        };
+      } finally {
+        setIsLoadingForm(false);
       }
-    },
-  });
+    };
+
+    loadFormValues();
+  }, [form, isEditMode, existingDocument, toast]);
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -279,6 +290,13 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
     html2pdf().from(element).set(opt).save().then(() => setIsPrinting(false)).catch(() => setIsPrinting(false));
   };
 
+  if (isLoadingForm) {
+      return (
+          <div className="flex justify-center items-center h-96">
+              <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+      )
+  }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
@@ -298,7 +316,7 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
                       <FormLabel>نوع المستند</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value}
+                        value={field.value}
                         dir="rtl"
                       >
                         <FormControl>
