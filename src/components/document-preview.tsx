@@ -4,7 +4,7 @@
 import { formatCurrency } from "@/lib/utils";
 import Image from "next/image";
 import type { DocumentType, SettingsData } from "@/lib/types";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { getSettings } from "@/lib/firebase-client";
 import { Skeleton } from "./ui/skeleton";
 
