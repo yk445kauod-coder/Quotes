@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   Table,
@@ -41,7 +41,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
@@ -49,6 +48,8 @@ import type { DocumentData } from "@/lib/types";
 import { deleteDocument, subscribeToDocuments } from "@/lib/firebase-client";
 import { exportToPdf, exportToWord, exportToExcel } from "@/lib/export";
 import { DocumentPreview } from "./document-preview";
+import { AlertDialogTrigger } from "@radix-ui/react-alert-dialog";
+import { useLoading } from "@/context/loading-context";
 
 interface DocumentListProps {
   initialDocuments: DocumentData[];
@@ -62,18 +63,24 @@ export function DocumentList({ initialDocuments }: DocumentListProps) {
   const exportContainerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
+  const { showLoading, hideLoading } = useLoading();
+  const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
     // Subscribe to real-time updates after the initial server render
     const unsubscribe = subscribeToDocuments((docs) => {
       setDocuments(docs);
+      hideLoading(); // Hide loading indicator once data is loaded/updated
     });
     // Cleanup subscription on component unmount
     return () => unsubscribe();
-  }, []);
+  }, [hideLoading]);
   
   const handleEdit = (id: string) => {
-    router.push(`/edit/${id}`);
+    showLoading();
+    startTransition(() => {
+      router.push(`/edit/${id}`);
+    });
   };
 
   const handleDelete = async (id: string) => {
@@ -113,7 +120,7 @@ export function DocumentList({ initialDocuments }: DocumentListProps) {
         if (format === 'pdf') {
             await exportToPdf(exportContainer, doc.docId);
         } else if (format === 'word') {
-            await exportToWord(exportContainer, doc.docId);
+            await exportToWord(doc, doc.docId);
         } else if (format === 'excel') {
             exportToExcel(doc.items, doc.docId);
         }

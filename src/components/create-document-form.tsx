@@ -42,13 +42,19 @@ import {
   Sparkles,
 } from "lucide-react";
 import { saveDocument, updateDocument } from "@/lib/firebase-client";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatHtmlToText } from "@/lib/utils";
 import type { DocumentData, SettingsData } from "@/lib/types";
 import { useRouter } from "next/navigation";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { exportToPdf, exportToWord, exportToExcel } from "@/lib/export";
 import { Textarea } from "./ui/textarea";
+import dynamic from 'next/dynamic';
+import 'react-quill/dist/quill.snow.css';
+import { useLoading } from "@/context/loading-context";
 
+
+// Dynamically import ReactQuill to avoid SSR issues
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 
 const formSchema = z.object({
   docType: z.enum(["quote", "estimation"], {
@@ -80,6 +86,7 @@ interface CreateDocumentFormProps {
 export function CreateDocumentForm({ existingDocument, defaultSettings }: CreateDocumentFormProps) {
   const { toast } = useToast();
   const router = useRouter();
+  const { showLoading, hideLoading } = useLoading();
   const [isSaving, setIsSaving] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isSuggesting, setIsSuggesting] = useState(false);
@@ -124,6 +131,7 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
 
   async function onSubmit(values: FormValues) {
     setIsSaving(true);
+    showLoading();
     
     try {
       if (isEditMode && existingDocument) {
@@ -161,8 +169,10 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
         title: "خطأ في الحفظ",
         description: errorMessage,
       });
+      hideLoading();
     } finally {
       setIsSaving(false);
+      // hideLoading() will be called when the next page loads if successful
     }
   }
 
@@ -179,7 +189,8 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
           if (format === 'pdf') {
               await exportToPdf(element, docId);
           } else if (format === 'word') {
-              await exportToWord(element, docId);
+              const dataForWord = { ...watchedAll, docId };
+              await exportToWord(dataForWord, docId);
           } else if (format === 'excel') {
               exportToExcel(watchedItems, docId);
           }
@@ -235,10 +246,12 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
   const handleItemDescriptionSuggestion = async (index: number) => {
     setIsSuggestingItem(index);
     try {
+        const currentDescription = formatHtmlToText(form.getValues(`items.${index}.description`));
+
         const itemContext = {
             docType: form.getValues("docType"),
             subject: form.getValues("subject"),
-            currentItemDescription: form.getValues(`items.${index}.description`) || "new item",
+            currentItemDescription: currentDescription || "new item",
         };
 
         const response = await fetch('/api/item-description', {
@@ -266,6 +279,15 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
         setIsSuggestingItem(null);
     }
   };
+  
+  const quillModules = useMemo(() => ({
+    toolbar: [
+        ['bold', 'italic', 'underline'],
+        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+        [{ 'align': [] }],
+        ['clean']
+    ]
+  }), []);
 
 
   return (
@@ -358,7 +380,14 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
                               name={`items.${index}.description`}
                               render={({ field }) => (
                                 <FormControl>
-                                    <Textarea {...field} placeholder="وصف البند" className="min-h-[60px]" />
+                                    <div className="quill-in-table">
+                                        <ReactQuill
+                                            theme="snow"
+                                            value={field.value}
+                                            onChange={field.onChange}
+                                            modules={quillModules}
+                                        />
+                                    </div>
                                 </FormControl>
                               )}
                             />
@@ -366,7 +395,7 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
                                 type="button"
                                 variant="ghost"
                                 size="icon"
-                                className="absolute top-1 left-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="absolute top-1 left-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity z-10"
                                 onClick={() => handleItemDescriptionSuggestion(index)}
                                 disabled={isSuggestingItem === index}
                                 title="اقتراح وصف"
@@ -450,7 +479,12 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
                             name="terms"
                             render={({ field }) => (
                                 <FormControl>
-                                    <Textarea {...field} rows={5} placeholder="الشروط والأحكام..." />
+                                    <ReactQuill
+                                        theme="snow"
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        modules={quillModules}
+                                    />
                                 </FormControl>
                             )}
                         />
@@ -463,7 +497,12 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
                             name="paymentMethod"
                             render={({ field }) => (
                                 <FormControl>
-                                     <Textarea {...field} rows={4} placeholder="تفاصيل الحسابات البنكية أو طرق الدفع الأخرى..." />
+                                     <ReactQuill
+                                        theme="snow"
+                                        value={field.value}
+                                        onChange={field.onChange}
+                                        modules={quillModules}
+                                    />
                                 </FormControl>
                             )}
                         />

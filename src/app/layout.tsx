@@ -1,7 +1,10 @@
+
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { AppHeader } from '@/components/app-header';
+import { LoadingProvider } from '@/context/loading-context';
+import { LoadingIndicator } from '@/components/loading-indicator';
 
 export const metadata: Metadata = {
   title: 'Al-Masria E-Quotes',
@@ -24,11 +27,14 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <div className="relative flex min-h-screen flex-col bg-background">
-          <AppHeader />
-          <main className="flex-1">{children}</main>
-        </div>
-        <Toaster />
+        <LoadingProvider>
+          <div className="relative flex min-h-screen flex-col bg-background">
+            <AppHeader />
+            <main className="flex-1">{children}</main>
+          </div>
+          <Toaster />
+          <LoadingIndicator />
+        </LoadingProvider>
       </body>
     </html>
   );

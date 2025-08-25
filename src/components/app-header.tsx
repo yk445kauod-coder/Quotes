@@ -1,42 +1,42 @@
-import Link from "next/link";
 import { FileText, Calculator } from "lucide-react";
+import { LoadingLink } from "./loading-link";
 
 export function AppHeader() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 max-w-screen-2xl items-center">
-        <Link href="/" className="mr-6 flex items-center space-x-2">
+        <LoadingLink href="/" className="mr-6 flex items-center space-x-2">
           <FileText className="h-6 w-6" />
           <span className="font-bold sm:inline-block">
             Al-Masria E-Quotes
           </span>
-        </Link>
+        </LoadingLink>
         <nav className="flex items-center gap-6 text-sm">
-          <Link
+          <LoadingLink
             href="/"
             className="transition-colors hover:text-foreground/80 text-foreground/60"
           >
             لوحة التحكم
-          </Link>
-          <Link
+          </LoadingLink>
+          <LoadingLink
             href="/create"
             className="transition-colors hover:text-foreground/80 text-foreground/60"
           >
             إنشاء مستند
-          </Link>
-          <Link
+          </LoadingLink>
+          <LoadingLink
             href="/settings"
             className="transition-colors hover:text-foreground/80 text-foreground/60"
           >
             الإعدادات
-          </Link>
-          <Link
+          </LoadingLink>
+          <LoadingLink
             href="/calculator"
             className="flex items-center transition-colors hover:text-foreground/80 text-foreground/60"
           >
             <Calculator className="ms-1 h-4 w-4" />
             حاسبة
-          </Link>
+          </LoadingLink>
         </nav>
       </div>
     </header>
