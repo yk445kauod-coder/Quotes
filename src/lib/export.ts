@@ -50,7 +50,7 @@ function convertToCSV(items: DocumentItem[]): string {
 
 /**
  * Builds a self-contained HTML string for a document, suitable for PDF/Word export.
- * This function has been completely rebuilt to handle pagination correctly.
+ * This function handles pagination correctly.
  * @param docData The document data.
  * @param settings The application settings.
  * @returns A promise resolving to the full HTML string.
@@ -164,17 +164,15 @@ async function buildExportHtml(docData: DocumentData, settings: SettingsData): P
 
         // Items Table
         pagesHtml += renderItemsTable(pageItems, pageIndex * ITEMS_PER_PAGE);
-
-        // Summary Section (only on last page)
-        if (pageIndex === totalPages - 1) {
-            pagesHtml += summarySection;
-        }
         
         pagesHtml += `</div>`; // end page-container
     });
+    
+    // Append the summary section AFTER the loop has finished, so it appears on the last page.
+    pagesHtml += summarySection;
 
 
-    const footerTextHorizontal = settings.footerText.replace(/\n/g, '  <span style="margin: 0 10px;">/</span>  ');
+    const footerTextHorizontal = (settings.footerText || '').replace(/\n/g, '  <span style="margin: 0 10px;">/</span>  ');
 
     return `
       <!DOCTYPE html>
@@ -192,33 +190,40 @@ async function buildExportHtml(docData: DocumentData, settings: SettingsData): P
               line-height: 1.4; 
               color: #000;
               margin: 0;
-              width: 210mm;
-              height: 297mm;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+            @page {
+              size: A4;
+              margin: 15mm 15mm 25mm 15mm; /* top, right, bottom, left */
             }
             .page-container {
                 page-break-after: always;
-                padding: 15mm 15mm 25mm 15mm; /* top right bottom left, bottom padding for footer */
             }
-            .page-container:last-child {
-                page-break-after: avoid;
+            .page-container:last-of-type {
+                 page-break-after: avoid;
             }
             .export-header {
                 width: 100%; 
                 margin-bottom: 10px;
             }
             .items-table thead {
+                display: table-header-group; /* Important for repeating headers */
                 background-color: #36454F; 
                 color: white;
+            }
+             .items-table tbody {
+                display: table-row-group;
             }
             .export-footer {
                 position: fixed;
                 bottom: 0;
-                left: 0;
-                right: 0;
-                width: 100%;
+                left: 15mm;
+                right: 15mm;
+                width: calc(100% - 30mm);
                 text-align: center;
                 font-size: 9pt;
-                padding: 10mm 15mm;
+                padding-top: 5px;
                 box-sizing: border-box;
                 border-top: 2px solid black;
             }
@@ -229,10 +234,20 @@ async function buildExportHtml(docData: DocumentData, settings: SettingsData): P
                 border: 1px solid #333;
                 text-align: right;
             }
+            /* Word specific */
+             .word-body {
+              width: 210mm;
+              height: 297mm;
+            }
+            div.WordSection1 {
+                page: WordSection1;
+            }
           </style>
         </head>
         <body>
-            ${pagesHtml}
+            <div class="content-wrapper">
+              ${pagesHtml}
+            </div>
             <footer class="export-footer">
                 ${footerTextHorizontal}
             </footer>
@@ -247,10 +262,10 @@ export async function exportToPdf(docData: DocumentData, fileName: string) {
     const htmlContent = await buildExportHtml(docData, settings);
 
     const opt = {
-        margin: 0, // Margins are handled by the page-container style
+        margin: 0, // Margins are handled by the @page CSS rule
         filename: `${fileName}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, logging: true },
+        html2canvas: { scale: 2, useCORS: true, logging: false },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
         pagebreak: { mode: ['css', 'legacy'] }
     };
@@ -291,41 +306,42 @@ export async function exportToWord(docData: DocumentData, fileName:string) {
         </xml>
         <![endif]-->
         <style>
-          @page WordSection1 {
-            size: 21cm 29.7cm; /* A4 */
-            margin: 1.5cm 1.5cm 1.5cm 1.5cm;
-            mso-header-margin: .5in;
-            mso-footer-margin: .5in;
-            mso-paper-source: 0;
-          }
-          div.WordSection1 {
-            page: WordSection1;
-          }
-          body {
-            font-family: 'PT Sans', Arial, sans-serif;
-            direction: rtl;
-          }
-          table {
-            border-collapse: collapse;
-            width: 100%;
-          }
-          td, th {
-            border: 1px solid black;
-            padding: 8px;
-            text-align: right;
-          }
-          .page-container {
-             page-break-after: always;
-          }
-          .page-container:last-child {
-             page-break-after: avoid;
-          }
-          .export-footer { display: none; }
+            @page WordSection1 {
+                size: 21cm 29.7cm; /* A4 */
+                margin: 1.5cm;
+                mso-header-margin: .5in;
+                mso-footer-margin: .5in;
+                mso-paper-source: 0;
+            }
+            body {
+              font-family: 'PT Sans', Arial, sans-serif;
+              direction: rtl;
+            }
+            div.WordSection1 {
+                page: WordSection1;
+            }
+            table {
+                border-collapse: collapse;
+                width: 100%;
+                page-break-inside: auto;
+            }
+            tr { 
+                page-break-inside: avoid; 
+                page-break-after: auto 
+            }
+            thead { display: table-header-group; }
+            td, th {
+                border: 1px solid black;
+                padding: 5px;
+                text-align: right;
+                page-break-inside: avoid;
+            }
+            .export-footer { display: none; }
         </style>
       </head>
       <body lang=AR-SA>
-        <div class=WordSection1>
-        ${sourceHTML}
+        <div class="WordSection1 word-body">
+            ${sourceHTML}
         </div>
       </body>
       </html>`;
@@ -356,5 +372,3 @@ export function exportToExcel(items: DocumentItem[], fileName: string) {
     document.body.removeChild(link);
     URL.revokeObjectURL(link.href);
 }
-
-    
