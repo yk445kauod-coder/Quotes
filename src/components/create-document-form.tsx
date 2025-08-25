@@ -48,10 +48,10 @@ import { useRouter } from "next/navigation";
 import React, { useState, useEffect, useMemo } from "react";
 import { exportToPdf, exportToWord, exportToExcel } from "@/lib/export";
 import 'react-quill/dist/quill.snow.css';
+import dynamic from 'next/dynamic';
 
-// Dynamically import ReactQuill to avoid SSR issues
-const ReactQuill =
-  typeof window === 'object' ? require('react-quill') : () => false;
+// Dynamically import ReactQuill to disable SSR and prevent hydration errors
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 
 
 const formSchema = z.object({
