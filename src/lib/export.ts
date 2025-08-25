@@ -102,8 +102,8 @@ async function buildExportHtml(docData: DocumentData, settings: SettingsData): P
     };
 
     const summarySection = `
-      <div class="summary-section">
-        <table style="width: 100%; margin-top: 20px; border: none; page-break-inside: avoid;">
+      <div class="summary-section" style="page-break-before: auto; page-break-inside: avoid;">
+        <table style="width: 100%; margin-top: 20px; border: none;">
             <tr>
               <td style="width: 60%; vertical-align: top; padding-left: 20px; border: none;">
                   ${docData.docType === 'quote' ? `
@@ -138,10 +138,10 @@ async function buildExportHtml(docData: DocumentData, settings: SettingsData): P
 
     let pagesHtml = '';
     itemPages.forEach((pageItems, pageIndex) => {
-        pagesHtml += `<div class="page-container">`;
+        let pageContent = '';
         // Page Header (only on first page)
         if (pageIndex === 0) {
-            pagesHtml += `
+            pageContent += `
                 <header class="export-header">
                     ${headerImageBase64 ? `<img src="${headerImageBase64}" style="width: 100%; height: auto; display: block; max-height: 150px; object-fit: contain;">` : ''}
                 </header>
@@ -162,16 +162,17 @@ async function buildExportHtml(docData: DocumentData, settings: SettingsData): P
             `;
         }
 
-        // Items Table
-        pagesHtml += renderItemsTable(pageItems, pageIndex * ITEMS_PER_PAGE);
+        // Items Table for the current page
+        pageContent += renderItemsTable(pageItems, pageIndex * ITEMS_PER_PAGE);
         
-        pagesHtml += `</div>`; // end page-container
+        // Add summary section ONLY on the last page
+        if (pageIndex === totalPages - 1) {
+            pageContent += summarySection;
+        }
+
+        pagesHtml += `<div class="page-container">${pageContent}</div>`;
     });
     
-    // Append the summary section AFTER the loop has finished, so it appears on the last page.
-    pagesHtml += summarySection;
-
-
     const footerTextHorizontal = (settings.footerText || '').replace(/\n/g, '  <span style="margin: 0 10px;">/</span>  ');
 
     return `
@@ -279,6 +280,11 @@ export async function exportToWord(docData: DocumentData, fileName:string) {
     const settings = await getSettings();
     const sourceHTML = await buildExportHtml(docData, settings);
     
+    // Use the main body of the generated HTML, not the full document
+    const bodyMatch = sourceHTML.match(/<body[^>]*>([\s\S]*)<\/body>/i);
+    const bodyContent = bodyMatch ? bodyMatch[1] : sourceHTML;
+
+
     // Adding Word-specific XML and header to ensure proper RTL display and structure
     const wordHtml = `
       <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
@@ -341,7 +347,7 @@ export async function exportToWord(docData: DocumentData, fileName:string) {
       </head>
       <body lang=AR-SA>
         <div class="WordSection1 word-body">
-            ${sourceHTML}
+            ${bodyContent}
         </div>
       </body>
       </html>`;
