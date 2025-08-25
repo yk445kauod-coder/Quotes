@@ -229,19 +229,25 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
         subject: form.getValues("subject"),
         clientName: form.getValues("clientName"),
       };
-      
-      // Use the Electron API exposed via preload script
-      if (window.electronAPI && typeof window.electronAPI.getSmartSuggestions === 'function') {
-        const suggestions = await window.electronAPI.getSmartSuggestions(docDetails);
-        form.setValue("terms", suggestions.suggestedTerms);
-        form.setValue("paymentMethod", suggestions.suggestedPaymentMethod);
-        toast({
-          title: "تم!",
-          description: "تم إنشاء الاقتراحات بنجاح.",
-        });
-      } else {
-        throw new Error("Electron API is not available.");
+
+      const response = await fetch('/api/smart-suggestions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(docDetails),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'فشل الاتصال بالـ API');
       }
+
+      const suggestions = await response.json();
+      form.setValue("terms", suggestions.suggestedTerms);
+      form.setValue("paymentMethod", suggestions.suggestedPaymentMethod);
+      toast({
+        title: "تم!",
+        description: "تم إنشاء الاقتراحات بنجاح.",
+      });
 
     } catch (error) {
        const errorMessage = error instanceof Error ? error.message : "فشل إنشاء الاقتراحات.";
@@ -264,12 +270,20 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
             currentItemDescription: form.getValues(`items.${index}.description`) || "new item",
         };
 
-        if (window.electronAPI && typeof window.electronAPI.getItemDescriptionSuggestion === 'function') {
-            const suggestion = await window.electronAPI.getItemDescriptionSuggestion(itemContext);
-            form.setValue(`items.${index}.description`, suggestion);
-        } else {
-          throw new Error("Electron API is not available.");
+        const response = await fetch('/api/item-description', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(itemContext),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'فشل الاتصال بالـ API');
         }
+
+        const suggestion = await response.json();
+        form.setValue(`items.${index}.description`, suggestion);
+
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "فشل إنشاء وصف البند.";
         toast({
@@ -536,14 +550,4 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
       </div>
     </div>
   );
-}
-
-// Add the electronAPI type to the global Window interface
-declare global {
-  interface Window {
-    electronAPI: {
-      getSmartSuggestions: (details: { docType: string; subject: string; clientName: string; }) => Promise<{ suggestedTerms: string; suggestedPaymentMethod: string; }>;
-      getItemDescriptionSuggestion: (context: { docType: string; subject:string; currentItemDescription: string; }) => Promise<string>;
-    }
-  }
 }

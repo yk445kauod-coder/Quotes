@@ -2,12 +2,10 @@
 /**
  * @fileOverview An AI flow to suggest a detailed item description.
  */
+'use server';
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { googleAI } from '@genkit-ai/googleai';
-
-ai.registry.registerPlugin(googleAI());
 
 export const ItemDescriptionInputSchema = z.object({
     docType: z.string().describe("The type of the document, either 'quote' or 'estimation'."),

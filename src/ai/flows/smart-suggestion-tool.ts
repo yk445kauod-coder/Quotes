@@ -2,13 +2,10 @@
 /**
  * @fileOverview An AI flow to suggest terms and payment methods for quotes and estimations.
  */
+'use server';
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { googleAI } from '@genkit-ai/googleai';
-
-ai.registry.registerPlugin(googleAI());
-
 
 export const SmartSuggestionInputSchema = z.object({
     docType: z.string().describe("The type of the document, either 'quote' or 'estimation'."),
