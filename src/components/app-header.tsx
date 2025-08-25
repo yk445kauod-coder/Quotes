@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Sheet, FileText, Settings } from "lucide-react";
+import { FileText, Calculator } from "lucide-react";
 
 export function AppHeader() {
   return (
@@ -29,6 +29,13 @@ export function AppHeader() {
             className="transition-colors hover:text-foreground/80 text-foreground/60"
           >
             الإعدادات
+          </Link>
+          <Link
+            href="/calculator"
+            className="flex items-center transition-colors hover:text-foreground/80 text-foreground/60"
+          >
+            <Calculator className="ms-1 h-4 w-4" />
+            حاسبة
           </Link>
         </nav>
       </div>
