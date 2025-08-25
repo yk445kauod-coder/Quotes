@@ -1,4 +1,3 @@
-'use server';
 
 /**
  * @fileOverview Provides smart suggestions for item descriptions.

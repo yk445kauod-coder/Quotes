@@ -1,4 +1,3 @@
-'use server';
 
 /**
  * @fileOverview Provides smart suggestions for terms and conditions and payment methods for quotes and estimations.

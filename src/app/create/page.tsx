@@ -1,3 +1,5 @@
+"use client";
+
 import { CreateDocumentForm } from "@/components/create-document-form";
 
 export default function CreatePage() {
