@@ -81,3 +81,26 @@
     @apply bg-gray-200 font-bold;
   }
 }
+
+/* Styles for ensuring footer is at the bottom of each PDF page */
+@media print {
+    .pdf-page-container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        page-break-after: always;
+    }
+
+    .pdf-header {
+        flex-shrink: 0;
+    }
+
+    .pdf-main {
+        flex-grow: 1;
+    }
+
+    .pdf-footer {
+        flex-shrink: 0;
+        margin-top: auto;
+    }
+}

@@ -47,6 +47,7 @@ import { formatCurrency } from "@/lib/utils";
 import type { DocumentData } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import React, { useState, useEffect } from "react";
+import { exportToPdf, exportToWord, exportToExcel } from "@/lib/export";
 
 const formSchema = z.object({
   docType: z.enum(["quote", "estimation"], {
@@ -78,7 +79,7 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
   const { toast } = useToast();
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
-  const [isPrinting, setIsPrinting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [isLoadingForm, setIsLoadingForm] = useState(true);
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [isSuggestingItem, setIsSuggestingItem] = useState<number | null>(null);
@@ -193,33 +194,31 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
     }
   }
 
-  const handleExportPdf = async () => {
-    setIsPrinting(true);
-    
-    // Dynamically import html2pdf.js only on the client-side
-    const html2pdf = (await import('html2pdf.js')).default;
-    
-    const element = document.getElementById('document-pdf-export');
-    if (!element) {
-        toast({ variant: "destructive", title: "خطأ", description: "عنصر المعاينة غير موجود." });
-        setIsPrinting(false);
-        return;
-    }
-    
-    const docId = isEditMode && existingDocument
-      ? existingDocument.docId 
-      : `${form.getValues('docType')}-${form.getValues('clientName')}`.replace(/\s/g, '_');
-      
-    const opt = {
-      margin: 0,
-      filename: `${docId}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, logging: false },
-      jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
-    };
-
-    html2pdf().from(element).set(opt).save().then(() => setIsPrinting(false)).catch(() => setIsPrinting(false));
+  const handleExport = async (format: 'pdf' | 'word' | 'excel') => {
+      setIsExporting(true);
+      const element = document.getElementById('document-pdf-export');
+      if (!element) {
+          toast({ variant: "destructive", title: "خطأ", description: "عنصر المعاينة غير موجود." });
+          setIsExporting(false);
+          return;
+      }
+      const docId = isEditMode && existingDocument ? existingDocument.docId : 'document';
+      try {
+          if (format === 'pdf') {
+              await exportToPdf(element, docId);
+          } else if (format === 'word') {
+              await exportToWord(element, docId);
+          } else if (format === 'excel') {
+              exportToExcel(watchedItems, docId);
+          }
+      } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : `فشل تصدير الملف كـ ${format}`;
+          toast({ variant: "destructive", title: "خطأ في التصدير", description: errorMessage });
+      } finally {
+          setIsExporting(false);
+      }
   };
+
 
   const handleSmartSuggestions = async () => {
     setIsSuggesting(true);
@@ -347,7 +346,7 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
                 name="clientName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>مقدم إلى (الجهة)</FormLabel>
+                    <FormLabel>السادة/</FormLabel>
                     <FormControl>
                       <Input placeholder="اسم العميل أو الجهة" {...field} />
                     </FormControl>
@@ -509,9 +508,13 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
               </div>
 
               <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4">
-                 <Button type="button" variant="outline" onClick={handleExportPdf} disabled={isPrinting}>
-                   {isPrinting ? <Loader2 className="ms-2 h-4 w-4 animate-spin" /> : <FileDown className="ms-2 h-4 w-4" />}
-                   تصدير PDF
+                 <Button type="button" variant="outline" onClick={() => handleExport('pdf')} disabled={isExporting}>
+                   {isExporting ? <Loader2 className="ms-2 h-4 w-4 animate-spin" /> : <FileDown className="ms-2 h-4 w-4" />}
+                   PDF
+                 </Button>
+                 <Button type="button" variant="outline" onClick={() => handleExport('word')} disabled={isExporting}>
+                   {isExporting ? <Loader2 className="ms-2 h-4 w-4 animate-spin" /> : <FileDown className="ms-2 h-4 w-4" />}
+                   Word
                  </Button>
                 <Button type="submit" disabled={isSaving}>
                   {isSaving ? <Loader2 className="ms-2 h-4 w-4 animate-spin" /> : <Save className="ms-2 h-4 w-4" />}
@@ -538,7 +541,7 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
             </div>
              {/* This div is hidden and used only for PDF export */}
             <div className="hidden">
-                 <div id="document-pdf-export">
+                 <div id="document-pdf-export" style={{ width: '210mm', height: '297mm' }}>
                     <DocumentPreview 
                         formData={{...watchedAll, docId: isEditMode && existingDocument ? existingDocument.docId : undefined }} 
                         isForPdf={true} 

@@ -32,7 +32,7 @@ const prompt = ai.definePrompt({
 
         Document Details:
         - Document Type: {{docType}}
-        - Client Name: {{clientName}}
+        - To (Client): {{clientName}}
         - Subject: {{subject}}
 
         Based on these details, provide professional and relevant suggestions for the 'Terms and Conditions' and 'Payment Method' fields. The response must be in Arabic.
