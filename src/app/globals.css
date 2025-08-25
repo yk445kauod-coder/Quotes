@@ -84,23 +84,40 @@
 
 /* Styles for ensuring footer is at the bottom of each PDF page */
 @media print {
+    html, body {
+        height: auto;
+        font-size: 10pt;
+    }
+    
     .pdf-page-container {
-        display: flex;
-        flex-direction: column;
-        height: 100%;
         page-break-after: always;
     }
 
-    .pdf-header {
-        flex-shrink: 0;
+    .pdf-header-placeholder, .pdf-footer-placeholder {
+        height: 120px; /* Adjust based on your header/footer height */
     }
 
-    .pdf-main {
-        flex-grow: 1;
+    .pdf-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
     }
 
     .pdf-footer {
-        flex-shrink: 0;
-        margin-top: auto;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        border-top: 2px solid black;
+        padding: 8px;
+        text-align: center;
     }
+
+    /* Rules to repeat table header on each page */
+    thead { display: table-header-group; }
+    tfoot { display: table-footer-group; }
+    tr { page-break-inside: avoid; }
 }

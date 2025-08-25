@@ -47,7 +47,6 @@ import { formatCurrency } from "@/lib/utils";
 import type { DocumentData } from "@/lib/types";
 import { deleteDocument, subscribeToDocuments } from "@/lib/firebase-client";
 import { exportToPdf, exportToWord, exportToExcel } from "@/lib/export";
-import { DocumentPreview } from "./document-preview";
 import { AlertDialogTrigger } from "@radix-ui/react-alert-dialog";
 import { useLoading } from "@/context/loading-context";
 
@@ -59,8 +58,7 @@ export function DocumentList({ initialDocuments }: DocumentListProps) {
   const [documents, setDocuments] = useState<DocumentData[]>(initialDocuments);
   const [loading, setLoading] = useState(false); // No initial loading
   const { toast } = useToast();
-  const [exportingDoc, setExportingDoc] = useState<DocumentData | null>(null);
-  const exportContainerRef = useRef<HTMLDivElement>(null);
+  const [exportingDocId, setExportingDocId] = useState<string | null>(null);
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const { showLoading, hideLoading } = useLoading();
@@ -105,20 +103,11 @@ export function DocumentList({ initialDocuments }: DocumentListProps) {
   };
 
   const handleExport = async (doc: DocumentData, format: 'pdf' | 'word' | 'excel') => {
-    setExportingDoc(doc);
-    // Wait for the state to update and the component to re-render
-    await new Promise(resolve => setTimeout(resolve, 0)); 
+    setExportingDocId(doc.id);
     
-    const exportContainer = exportContainerRef.current;
-    if (!exportContainer) {
-        toast({ variant: "destructive", title: "خطأ", description: "عنصر التصدير غير موجود." });
-        setExportingDoc(null);
-        return;
-    }
-
     try {
         if (format === 'pdf') {
-            await exportToPdf(exportContainer, doc.docId);
+            await exportToPdf(doc, doc.docId);
         } else if (format === 'word') {
             await exportToWord(doc, doc.docId);
         } else if (format === 'excel') {
@@ -126,9 +115,10 @@ export function DocumentList({ initialDocuments }: DocumentListProps) {
         }
         toast({ title: "تم التصدير", description: `تم تصدير المستند كـ ${format.toUpperCase()}.` });
     } catch (e) {
-        toast({ variant: "destructive", title: "خطأ في التصدير", description: "فشل تصدير المستند." });
+        const errorMessage = e instanceof Error ? e.message : "فشل تصدير المستند.";
+        toast({ variant: "destructive", title: "خطأ في التصدير", description: errorMessage });
     } finally {
-        setExportingDoc(null);
+        setExportingDocId(null);
     }
   };
 
@@ -202,8 +192,8 @@ export function DocumentList({ initialDocuments }: DocumentListProps) {
                     <AlertDialog>
                        <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button aria-haspopup="true" size="icon" variant="ghost">
-                            <MoreHorizontal className="h-4 w-4" />
+                          <Button aria-haspopup="true" size="icon" variant="ghost" disabled={exportingDocId === doc.id}>
+                            {exportingDocId === doc.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreHorizontal className="h-4 w-4" />}
                             <span className="sr-only">Toggle menu</span>
                           </Button>
                         </DropdownMenuTrigger>
@@ -267,15 +257,6 @@ export function DocumentList({ initialDocuments }: DocumentListProps) {
              </div>
            )}
         </div>
-        )}
-       
-        {/* Hidden container for exporting */}
-        {exportingDoc && (
-          <div className="hidden">
-            <div ref={exportContainerRef} style={{ width: '210mm' }}>
-                <DocumentPreview formData={exportingDoc} isForPdf={true} />
-            </div>
-          </div>
         )}
       </CardContent>
     </Card>

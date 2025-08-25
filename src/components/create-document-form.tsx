@@ -123,6 +123,16 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
   const watchedDocType = form.watch("docType");
   const watchedAll = form.watch();
 
+  const currentDocumentData: DocumentData = {
+    id: existingDocument?.id || '',
+    docId: existingDocument?.docId || '',
+    ...watchedAll,
+    subTotal,
+    taxAmount,
+    total,
+    createdAt: existingDocument?.createdAt || new Date().toISOString(),
+  };
+
 
   async function onSubmit(values: FormValues) {
     setIsSaving(true);
@@ -173,19 +183,12 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
 
   const handleExport = async (format: 'pdf' | 'word' | 'excel') => {
       setIsExporting(true);
-      const element = document.getElementById('document-pdf-export');
-      if (!element) {
-          toast({ variant: "destructive", title: "خطأ", description: "عنصر المعاينة غير موجود." });
-          setIsExporting(false);
-          return;
-      }
-      const docId = isEditMode && existingDocument ? existingDocument.docId : 'document';
+      const docId = currentDocumentData.docId || 'document';
       try {
           if (format === 'pdf') {
-              await exportToPdf(element, docId);
+              await exportToPdf(currentDocumentData, docId);
           } else if (format === 'word') {
-              const dataForWord = { ...watchedAll, docId };
-              await exportToWord(element, docId);
+              await exportToWord(currentDocumentData, docId);
           } else if (format === 'excel') {
               exportToExcel(watchedItems, docId);
           }
@@ -505,21 +508,10 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
             <CardTitle>معاينة المستند</CardTitle>
           </CardHeader>
           <CardContent>
-             {/* This div is for the live preview on screen */}
-            <div id="document-preview-container" className="w-full aspect-[1/1.414] border rounded-lg shadow-md">
+            <div id="document-preview-container" className="w-full bg-gray-100 p-4 rounded-lg shadow-inner overflow-auto max-h-[80vh]">
                 <DocumentPreview 
-                    formData={{...watchedAll, docId: isEditMode && existingDocument ? existingDocument.docId : undefined }} 
-                    isForPdf={false} 
+                    formData={currentDocumentData} 
                 />
-            </div>
-             {/* This div is hidden and used only for PDF export */}
-            <div className="hidden">
-                 <div id="document-pdf-export" style={{ width: '210mm' }}>
-                    <DocumentPreview 
-                        formData={{...watchedAll, docId: isEditMode && existingDocument ? existingDocument.docId : undefined }} 
-                        isForPdf={true} 
-                    />
-                 </div>
             </div>
           </CardContent>
         </Card>
