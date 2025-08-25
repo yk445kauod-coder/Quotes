@@ -506,7 +506,7 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
           </CardHeader>
           <CardContent>
              {/* This div is for the live preview on screen */}
-            <div id="document-preview-container" className="w-full aspect-[1/1.414] border rounded-lg shadow-md overflow-hidden">
+            <div id="document-preview-container" className="w-full aspect-[1/1.414] border rounded-lg shadow-md overflow-auto">
                 <DocumentPreview 
                     formData={{...watchedAll, docId: isEditMode && existingDocument ? existingDocument.docId : undefined }} 
                     isForPdf={false} 
