@@ -8,15 +8,31 @@ import { formatCurrency } from "./utils";
 
 /**
  * Converts an image URL to a Base64 string.
+ * Uses a proxy to avoid CORS issues.
  * @param url The URL of the image.
  * @returns A promise that resolves with the Base64 string.
  */
 async function imageToBase64(url: string): Promise<string> {
+    // A simple CORS proxy can be used, or a serverless function.
+    // This example uses a public proxy for demonstration.
+    // For production, it's highly recommended to host your own proxy.
+    const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
     try {
-        // Using a CORS proxy to prevent tainted canvas errors in html2pdf
-        const response = await fetch(`https://cors-anywhere.herokuapp.com/${url}`);
+        const response = await fetch(`${proxyUrl}${url}`);
         if (!response.ok) {
-             throw new Error(`Failed to fetch image via proxy: ${response.statusText}`);
+            console.error(`CORS Anywhere proxy failed: ${response.statusText}. Trying direct fetch.`);
+            // Fallback to direct fetch if proxy fails
+            const directResponse = await fetch(url);
+            if (!directResponse.ok) {
+                throw new Error(`Direct fetch failed: ${directResponse.statusText}`);
+            }
+            const blob = await directResponse.blob();
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result as string);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
         }
         const blob = await response.blob();
         return new Promise((resolve, reject) => {
@@ -27,7 +43,7 @@ async function imageToBase64(url: string): Promise<string> {
         });
     } catch (e) {
         console.error("Failed to convert image to Base64:", e);
-        // Fallback transparent pixel
+        // Fallback transparent pixel if all methods fail
         return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
     }
 }
@@ -48,6 +64,7 @@ function convertToCSV(items: DocumentItem[]): string {
 
 /**
  * Builds a self-contained HTML string for a document, suitable for PDF/Word export.
+ * This function has been completely rebuilt to match the target design image.
  * @param docData The document data.
  * @param settings The application settings.
  * @returns A promise resolving to the full HTML string.
@@ -60,49 +77,50 @@ async function buildExportHtml(docData: DocumentData, settings: SettingsData): P
     const docIdText = docData.docId || '[سيتم إنشاؤه عند الحفظ]';
 
     const itemsHtml = docData.items.map((item, index) => `
-        <tr>
-            <td style="border: 1px solid #333; padding: 6px; text-align: center; vertical-align: top; width: 5%;">${index + 1}</td>
-            <td style="border: 1px solid #333; padding: 6px; white-space: pre-wrap; vertical-align: top; text-align: right; line-height: 1.5;">${item.description || ''}</td>
-            <td style="border: 1px solid #333; padding: 6px; text-align: center; vertical-align: top; width: 10%;">${item.unit}</td>
-            <td style="border: 1px solid #333; padding: 6px; text-align: center; vertical-align: top; width: 10%;">${item.quantity}</td>
-            <td style="border: 1px solid #333; padding: 6px; text-align: right; vertical-align: top; width: 15%;">${formatCurrency(item.price || 0)}</td>
-            <td style="border: 1px solid #333; padding: 6px; text-align: right; vertical-align: top; width: 15%;">${formatCurrency((item.quantity || 0) * (item.price || 0))}</td>
+        <tr style="page-break-inside: avoid;">
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: top; width: 5%;">${index + 1}</td>
+            <td style="border: 1px solid #ddd; padding: 8px; white-space: pre-wrap; vertical-align: top; text-align: right; line-height: 1.5; width: 50%;">${item.description || ''}</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: top; width: 10%;">${item.unit}</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: center; vertical-align: top; width: 10%;">${item.quantity}</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: right; vertical-align: top; width: 12.5%;">${formatCurrency(item.price || 0)}</td>
+            <td style="border: 1px solid #ddd; padding: 8px; text-align: right; vertical-align: top; width: 12.5%;">${formatCurrency((item.quantity || 0) * (item.price || 0))}</td>
         </tr>
     `).join('');
 
     const summaryHtml = `
-      <div class="summary-section" style="display: flex; justify-content: space-between; align-items: flex-start; padding-top: 15px; page-break-inside: avoid !important;">
-          <div style="flex-grow: 1; padding-left: 20px; max-width: 55%;">
+      <table style="width: 100%; margin-top: 20px; page-break-inside: avoid;">
+        <tr>
+          <td style="width: 60%; vertical-align: top; padding-left: 20px;">
               ${docData.docType === 'quote' ? `
-                  <h3 style="font-weight: bold; margin: 0 0 5px 0; font-size: 11pt;">طريقة الدفع:</h3>
-                  <div style="white-space: pre-wrap; font-size: 10pt; margin-bottom: 15px; line-height: 1.5;">${docData.paymentMethod || ''}</div>
-                  <h3 style="font-weight: bold; margin: 0 0 5px 0; font-size: 11pt;">الشروط العامة:</h3>
-                  <div style="white-space: pre-wrap; font-size: 10pt; line-height: 1.5;">${docData.terms || ''}</div>
+                  <h3 style="font-weight: bold; margin: 0 0 5px 0; font-size: 11pt; text-align: right;">طريقة الدفع:</h3>
+                  <div style="white-space: pre-wrap; font-size: 10pt; text-align: right; margin-bottom: 15px; line-height: 1.6;">${docData.paymentMethod || ''}</div>
+                  <h3 style="font-weight: bold; margin: 0 0 5px 0; font-size: 11pt; text-align: right;">الشروط العامة:</h3>
+                  <div style="white-space: pre-wrap; font-size: 10pt; text-align: right; line-height: 1.6;">${docData.terms || ''}</div>
               ` : ''}
-          </div>
-          <div style="width: 40%; min-width: 280px; flex-shrink: 0;">
+          </td>
+          <td style="width: 40%; vertical-align: top;">
               <table style="width: 100%; border-collapse: collapse; font-size: 10pt;">
                   <tbody>
                       <tr>
-                          <td style="border: 1px solid #333; padding: 6px; font-weight: bold;">المجموع قبل الضريبة</td>
-                          <td style="border: 1px solid #333; padding: 6px; text-align: left;">${formatCurrency(docData.subTotal)}</td>
+                          <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold; text-align: right;">المجموع قبل الضريبة</td>
+                          <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${formatCurrency(docData.subTotal)}</td>
                       </tr>
                       <tr>
-                          <td style="border: 1px solid #333; padding: 6px; font-weight: bold;">الضريبة (14%)</td>
-                          <td style="border: 1px solid #333; padding: 6px; text-align: left;">${formatCurrency(docData.taxAmount)}</td>
+                          <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold; text-align: right;">الضريبة (14%)</td>
+                          <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">${formatCurrency(docData.taxAmount)}</td>
                       </tr>
                       <tr>
-                          <td style="border: 1px solid #333; padding: 6px; font-weight: bold; background-color: #eee;">الإجمالي</td>
-                          <td style="border: 1px solid #333; padding: 6px; font-weight: bold; background-color: #eee; text-align: left;">${formatCurrency(docData.total)}</td>
+                          <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold; background-color: #eee; text-align: right;">الإجمالي</td>
+                          <td style="border: 1px solid #ddd; padding: 8px; font-weight: bold; background-color: #eee; text-align: right;">${formatCurrency(docData.total)}</td>
                       </tr>
                   </tbody>
               </table>
-          </div>
-      </div>
+          </td>
+        </tr>
+      </table>
     `;
 
-    // Footer text logic to replace newlines with a separator for horizontal display
-    const footerTextHorizontal = settings.footerText.replace(/\n/g, '  |  ');
+    const footerTextHorizontal = settings.footerText.replace(/\n/g, '  <span style="margin: 0 10px;">/</span>  ');
 
     return `
       <!DOCTYPE html>
@@ -113,31 +131,40 @@ async function buildExportHtml(docData: DocumentData, settings: SettingsData): P
           <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
           <link href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&display=swap" rel="stylesheet" />
           <style>
-            body { font-family: 'PT Sans', sans-serif; direction: rtl; font-size: 10pt; line-height: 1.4; color: #000; }
+            body { 
+              font-family: 'PT Sans', 'Arial', sans-serif; 
+              direction: rtl; 
+              font-size: 10pt; 
+              line-height: 1.4; 
+              color: #000;
+              margin: 0;
+            }
+            .page-content {
+              padding-bottom: 40mm; /* Space for the footer */
+            }
+            .export-footer {
+                display: none; /* Hide in body, only visible in @page */
+            }
           </style>
         </head>
         <body>
-            <header class="export-header" style="margin-bottom: 10px;">
-                ${headerImageBase64 ? `<img src="${headerImageBase64}" style="width: 100%; height: auto; display: block;">` : ''}
+          <div class="page-content">
+            <header class="export-header" style="width: 100%; margin-bottom: 10px;">
+                ${headerImageBase64 ? `<img src="${headerImageBase64}" style="width: 100%; height: auto; display: block; max-height: 150px; object-fit: contain;">` : ''}
             </header>
-            
-            <div style="text-align: center; margin-bottom: 10px;">
-                <h2 style="font-size: 18pt; font-weight: bold; text-decoration: underline; margin: 0;">${docTypeName}</h2>
-            </div>
             
             <table style="width: 100%; margin-bottom: 15px; font-size: 11pt;">
               <tr>
-                <td style="text-align: right;"><strong>التاريخ:</strong> ${today}</td>
+                <td style="text-align: right;"><strong>السادة/</strong> ${docData.clientName || ''}</td>
+                <td style="text-align: left;"><strong>التاريخ:</strong> ${today}</td>
+              </tr>
+              <tr>
+                <td style="text-align: right;"><strong>الموضوع/</strong> ${docData.subject || ''}</td>
                 <td style="text-align: left;"><strong>${docTypeName} رقم:</strong> ${docIdText}</td>
               </tr>
             </table>
 
             <div style="text-align: right; margin-bottom: 15px; font-size: 11pt;">
-                <p style="margin: 2px 0;"><strong>السادة/</strong> ${docData.clientName || ''}</p>
-                <p style="margin: 2px 0;"><strong>الموضوع/</strong> ${docData.subject || ''}</p>
-            </div>
-            
-            <div style="text-align: right; margin-bottom: 10px; font-size: 11pt;">
               <p style="margin:0;">تحية طيبة وبعد،،</p>
               <p style="margin:0;">بالإشارة إلى الموضوع أعلاه نتشرف بتقديم عرض أسعارنا كما يلي:</p>
             </div>
@@ -146,12 +173,12 @@ async function buildExportHtml(docData: DocumentData, settings: SettingsData): P
                 <table style="width: 100%; border-collapse: collapse; font-size: 10pt;">
                     <thead style="background-color: #36454F; color: white;">
                         <tr>
-                            <th style="border: 1px solid #333; padding: 8px; text-align: center; font-weight: bold;">م</th>
-                            <th style="border: 1px solid #333; padding: 8px; text-align: right; font-weight: bold;">البيان</th>
-                            <th style="border: 1px solid #333; padding: 8px; text-align: center; font-weight: bold;">الوحدة</th>
-                            <th style="border: 1px solid #333; padding: 8px; text-align: center; font-weight: bold;">العدد</th>
-                            <th style="border: 1px solid #333; padding: 8px; text-align: right; font-weight: bold;">السعر</th>
-                            <th style="border: 1px solid #333; padding: 8px; text-align: right; font-weight: bold;">الإجمالي</th>
+                            <th style="border: 1px solid #333; padding: 8px; text-align: center; font-weight: bold; width: 5%;">م</th>
+                            <th style="border: 1px solid #333; padding: 8px; text-align: right; font-weight: bold; width: 50%;">البيان</th>
+                            <th style="border: 1px solid #333; padding: 8px; text-align: center; font-weight: bold; width: 10%;">الوحدة</th>
+                            <th style="border: 1px solid #333; padding: 8px; text-align: center; font-weight: bold; width: 10%;">العدد</th>
+                            <th style="border: 1px solid #333; padding: 8px; text-align: right; font-weight: bold; width: 12.5%;">السعر</th>
+                            <th style="border: 1px solid #333; padding: 8px; text-align: right; font-weight: bold; width: 12.5%;">الإجمالي</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -160,7 +187,7 @@ async function buildExportHtml(docData: DocumentData, settings: SettingsData): P
                 </table>
                 ${summaryHtml}
             </main>
-
+          </div>
             <footer class="export-footer">
                 ${footerTextHorizontal}
             </footer>
@@ -175,7 +202,7 @@ export async function exportToPdf(docData: DocumentData, fileName: string) {
     const htmlContent = await buildExportHtml(docData, settings);
 
     const opt = {
-        margin: [15, 15, 25, 15], // top, right, bottom, left in mm
+        margin: 15, // in mm
         filename: `${fileName}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true, logging: false },
@@ -183,8 +210,8 @@ export async function exportToPdf(docData: DocumentData, fileName: string) {
         pagebreak: { mode: ['css', 'legacy'] }
     };
     
-    const worker = html2pdf().from(htmlContent).set(opt);
-    await worker.save();
+    // The worker handles the entire conversion process
+    await html2pdf().from(htmlContent).set(opt).save();
 }
 
 
@@ -208,6 +235,24 @@ export async function exportToWord(docData: DocumentData, fileName:string) {
           </w:WordDocument>
         </xml>
         <![endif]-->
+        <style>
+          @page {
+            size: A4;
+            mso-page-orientation: portrait;
+            margin: 1.5cm;
+          }
+          body {
+            font-family: Arial, sans-serif;
+          }
+          table {
+            border-collapse: collapse;
+            width: 100%;
+          }
+          td, th {
+            border: 1px solid black;
+            padding: 8px;
+          }
+        </style>
       </head>
       <body>
         ${sourceHTML}
