@@ -39,6 +39,8 @@ import {
   Save,
   FileDown,
   Loader2,
+  Wand2,
+  Sparkles,
 } from "lucide-react";
 import { saveDocument, updateDocument, getSettings } from "@/lib/firebase-client";
 import { formatCurrency } from "@/lib/utils";
@@ -78,6 +80,8 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
   const [isSaving, setIsSaving] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
   const [isLoadingForm, setIsLoadingForm] = useState(true);
+  const [isSuggesting, setIsSuggesting] = useState(false);
+  const [isSuggestingItem, setIsSuggestingItem] = useState<number | null>(null);
   const isEditMode = !!existingDocument;
 
 
@@ -217,6 +221,68 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
     html2pdf().from(element).set(opt).save().then(() => setIsPrinting(false)).catch(() => setIsPrinting(false));
   };
 
+  const handleSmartSuggestions = async () => {
+    setIsSuggesting(true);
+    try {
+      const docDetails = {
+        docType: form.getValues("docType"),
+        subject: form.getValues("subject"),
+        clientName: form.getValues("clientName"),
+      };
+      
+      // Use the Electron API exposed via preload script
+      if (window.electronAPI && typeof window.electronAPI.getSmartSuggestions === 'function') {
+        const suggestions = await window.electronAPI.getSmartSuggestions(docDetails);
+        form.setValue("terms", suggestions.suggestedTerms);
+        form.setValue("paymentMethod", suggestions.suggestedPaymentMethod);
+        toast({
+          title: "تم!",
+          description: "تم إنشاء الاقتراحات بنجاح.",
+        });
+      } else {
+        throw new Error("Electron API is not available.");
+      }
+
+    } catch (error) {
+       const errorMessage = error instanceof Error ? error.message : "فشل إنشاء الاقتراحات.";
+       toast({
+         variant: "destructive",
+         title: "خطأ في الذكاء الاصطناعي",
+         description: errorMessage,
+       });
+    } finally {
+      setIsSuggesting(false);
+    }
+  };
+
+  const handleItemDescriptionSuggestion = async (index: number) => {
+    setIsSuggestingItem(index);
+    try {
+        const itemContext = {
+            docType: form.getValues("docType"),
+            subject: form.getValues("subject"),
+            currentItemDescription: form.getValues(`items.${index}.description`) || "new item",
+        };
+
+        if (window.electronAPI && typeof window.electronAPI.getItemDescriptionSuggestion === 'function') {
+            const suggestion = await window.electronAPI.getItemDescriptionSuggestion(itemContext);
+            form.setValue(`items.${index}.description`, suggestion);
+        } else {
+          throw new Error("Electron API is not available.");
+        }
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "فشل إنشاء وصف البند.";
+        toast({
+            variant: "destructive",
+            title: "خطأ في الذكاء الاصطناعي",
+            description: errorMessage,
+        });
+    } finally {
+        setIsSuggestingItem(null);
+    }
+  };
+
+
   if (isLoadingForm) {
       return (
           <div className="flex justify-center items-center h-96">
@@ -309,7 +375,7 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
                       {fields.map((field, index) => (
                         <TableRow key={field.id}>
                           <TableCell className="p-1 align-middle">{index + 1}</TableCell>
-                          <TableCell className="p-1 align-middle">
+                          <TableCell className="p-1 align-middle relative group">
                             <FormField
                               control={form.control}
                               name={`items.${index}.description`}
@@ -317,6 +383,17 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
                                 <Textarea {...field} placeholder="وصف البند" className="min-w-[150px]" rows={2} />
                               )}
                             />
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="absolute top-1 left-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={() => handleItemDescriptionSuggestion(index)}
+                                disabled={isSuggestingItem === index}
+                                title="اقتراح وصف"
+                            >
+                                {isSuggestingItem === index ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4 text-primary" />}
+                            </Button>
                           </TableCell>
                            <TableCell className="p-1 align-middle">
                             <FormField
@@ -382,6 +459,10 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <FormLabel htmlFor="terms">{watchedDocType === 'quote' ? 'الشروط' : 'ملاحظات'}</FormLabel>
+                   <Button type="button" variant="outline" size="sm" onClick={handleSmartSuggestions} disabled={isSuggesting}>
+                       {isSuggesting ? <Loader2 className="ms-2 h-4 w-4 animate-spin" /> : <Wand2 className="ms-2 h-4 w-4" />}
+                       اقتراح ذكي
+                   </Button>
                 </div>
                  <FormField
                   control={form.control}
@@ -455,4 +536,14 @@ export function CreateDocumentForm({ existingDocument }: CreateDocumentFormProps
       </div>
     </div>
   );
+}
+
+// Add the electronAPI type to the global Window interface
+declare global {
+  interface Window {
+    electronAPI: {
+      getSmartSuggestions: (details: { docType: string; subject: string; clientName: string; }) => Promise<{ suggestedTerms: string; suggestedPaymentMethod: string; }>;
+      getItemDescriptionSuggestion: (context: { docType: string; subject:string; currentItemDescription: string; }) => Promise<string>;
+    }
+  }
 }
