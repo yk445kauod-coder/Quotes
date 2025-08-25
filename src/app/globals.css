@@ -93,16 +93,16 @@
         page-break-after: always;
     }
 
+    .pdf-page-container:last-child {
+        page-break-after: auto;
+    }
+
     .pdf-header-placeholder, .pdf-footer-placeholder {
         height: 120px; /* Adjust based on your header/footer height */
     }
 
     .pdf-header {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        width: 100%;
+      /* No longer fixed, will only appear on the first page */
     }
 
     .pdf-footer {
@@ -114,6 +114,8 @@
         border-top: 2px solid black;
         padding: 8px;
         text-align: center;
+        background-color: white; /* Ensure it covers content */
+        z-index: 10;
     }
 
     /* Rules to repeat table header on each page */
