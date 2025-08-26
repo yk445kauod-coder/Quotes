@@ -15,13 +15,14 @@ export function formatCurrency(amount: number, currency = "EGP") {
 }
 
 /**
- * Formats a number to a string using Hindi (Arabic-Indic) numerals.
+ * Formats a number to a string using Hindi (Arabic-Indic) numerals without grouping separators.
  * @param num The number to format.
  * @returns A string representation of the number with Hindi numerals.
  */
 export function formatNumberToHindi(num: number): string {
     if (typeof num !== 'number') return '';
-    return new Intl.NumberFormat('ar-EG-u-nu-arab').format(num);
+    // Added useGrouping: false to prevent separators like ١٬٢٣٤
+    return new Intl.NumberFormat('ar-EG-u-nu-arab', { useGrouping: false }).format(num);
 }
 
 const westernArabicToHindiMap: { [key: string]: string } = {
