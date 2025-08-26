@@ -117,7 +117,7 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
   
   // Set the payment method value on initial render and whenever it might change.
   useEffect(() => {
-    form.setValue("paymentMethod", FIXED_PAY_METHOD);
+    form.setValue("paymentMethod", FIXED_PAYMENT_METHOD);
   }, [form]);
 
 
@@ -551,13 +551,15 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
             <CardTitle>معاينة المستند</CardTitle>
           </CardHeader>
           <CardContent>
-             <div className="w-full bg-gray-100 p-8 rounded-lg shadow-inner overflow-auto max-h-[80vh] no-print">
-                <div id="document-preview-container">
-                    <DocumentPreview 
-                        formData={currentDocumentData} 
-                        settings={defaultSettings}
-                    />
-                </div>
+            <div id="document-export-target">
+              <div className="w-full bg-gray-100 p-8 rounded-lg shadow-inner overflow-auto max-h-[80vh] no-print">
+                  <div id="document-preview-container">
+                      <DocumentPreview 
+                          formData={currentDocumentData} 
+                          settings={defaultSettings}
+                      />
+                  </div>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -565,3 +567,6 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
     </div>
   );
 }
+
+
+    
