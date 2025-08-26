@@ -74,7 +74,7 @@
         @apply bg-white text-black font-body text-sm shadow-lg mx-auto mb-4;
         width: 210mm;
         min-height: 296.5mm; /* Slightly less than 297mm to avoid issues */
-        padding: 15mm 15mm 20mm 15mm;
+        padding: 10mm 15mm 15mm 15mm; /* Reduced top/bottom padding */
         display: flex;
         flex-direction: column;
         position: relative;
@@ -83,13 +83,14 @@
         flex-grow: 1;
     }
     .a4-page table {
+        @apply text-xs; /* Slightly smaller font size for table */
         width: 100%;
         border-collapse: collapse;
     }
     .a4-page th,
     .a4-page td {
         border: 1px solid #ccc;
-        padding: 5px;
+        padding: 4px; /* Reduced cell padding */
         text-align: right;
     }
     .a4-page th {
@@ -129,7 +130,7 @@
         display: none !important;
     }
     
-    #document-preview-container {
+    #document-export-target {
         padding: 0 !important;
         margin: 0 !important;
         box-shadow: none !important;

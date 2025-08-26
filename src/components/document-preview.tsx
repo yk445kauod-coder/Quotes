@@ -67,7 +67,7 @@ export function DocumentPreview({ formData, settings: propSettings }: DocumentPr
   const resolvedSettings = {
     headerImageUrl: settings?.headerImageUrl || "https://ik.imagekit.io/fpbwa3np7/%D8%A8%D8%B1%D9%86%D8%A7%D9%85%D8%AC%20%D8%B9%D8%B1%D9%88%D8%B6%20%D8%A7%D9%84%D8%A7%D8%B3%D8%B9%D8%A7%D8%B1/header%20-%20Copy.png?updatedAt=1755348570527",
     footerText: settings?.footerText || "Footer text not set",
-    itemsPerPage: settings?.itemsPerPage || 13,
+    itemsPerPage: settings?.itemsPerPage || 16,
   }
 
   const ITEMS_PER_PAGE = resolvedSettings.itemsPerPage;
@@ -89,7 +89,7 @@ export function DocumentPreview({ formData, settings: propSettings }: DocumentPr
   const totalPages = itemChunks.length;
 
   const renderTable = (chunk: DocumentItem[], startIndex: number) => (
-      <table className="w-full border-collapse text-right text-xs mt-4">
+      <table className="w-full border-collapse text-right mt-4">
           <thead>
               <tr className="bg-gray-100">
                   <th className="border p-1 w-[5%]">م</th>
@@ -158,8 +158,8 @@ export function DocumentPreview({ formData, settings: propSettings }: DocumentPr
                   src={resolvedSettings.headerImageUrl}
                   alt="Company Header"
                   width={794}
-                  height={120}
-                  className="w-full h-auto object-contain mb-4"
+                  height={100}
+                  className="w-full h-auto object-contain mb-2"
                   data-ai-hint="company logo"
                   priority
                   unoptimized
@@ -167,14 +167,14 @@ export function DocumentPreview({ formData, settings: propSettings }: DocumentPr
             )}
              {pageIndex === 0 && (
                 <>
-                    <div className="text-center my-4">
+                    <div className="text-center my-2">
                         <h2 className="text-xl font-bold underline">{docTypeName}</h2>
                     </div>
-                    <div className="flex justify-between mb-4 text-sm">
+                    <div className="flex justify-between mb-2 text-sm">
                         <span>التاريخ: {today}</span>
                         <span>{docTypeName} رقم: {docIdText}</span>
                     </div>
-                    <div className="mb-4 text-sm">
+                    <div className="mb-2 text-sm">
                         <p><span className="font-bold">السادة/</span> {clientName}</p>
                         <p><span className="font-bold">الموضوع:</span> {subject}</p>
                     </div>
