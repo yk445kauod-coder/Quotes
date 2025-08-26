@@ -99,6 +99,7 @@
     }
     .a4-page .whitespace-pre-wrap {
         white-space: pre-wrap;
+        word-wrap: break-word;
     }
     .a4-page > footer {
         @apply w-full mt-auto p-2 border-t-2 border-black text-center text-xs;
@@ -107,6 +108,12 @@
     /* This class ensures the element breaks to a new page when printing */
     .page-break {
         page-break-after: always;
+    }
+    .cell-center {
+        @apply align-middle text-center;
+    }
+    .cell-top-right {
+        @apply align-top text-right whitespace-pre-wrap;
     }
 }
 

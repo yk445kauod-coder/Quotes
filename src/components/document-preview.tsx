@@ -84,18 +84,24 @@ export function DocumentPreview({ formData, settings: propSettings }: DocumentPr
       while (currentIndex < items.length) {
           let pageSize = resolvedSettings.itemsPerPage;
           
-          // Determine the range of items for the potential page
-          const potentialEndIndex = currentIndex + pageSize;
-          const potentialChunk = items.slice(currentIndex, potentialEndIndex);
-          
-          // Check if any item in this potential chunk has long text
+          const potentialChunk = items.slice(currentIndex);
           const hasLongText = potentialChunk.some(
-              item => (item.description || '').length > LONG_TEXT_THRESHOLD
+              (item, indexInChunk) => {
+                  const itemsOnThisPage = itemChunks.flat().length + indexInChunk + 1;
+                  // If we've already decided on a page size for this page, this logic is faulty.
+                  // Let's simplify: check the *next* chunk.
+                  return (item.description || '').length > LONG_TEXT_THRESHOLD;
+              }
           );
+          
+          const itemsOnThisPageSoFar = itemChunks.slice(0, pageIndex).reduce((acc, c) => acc + c.length, 0);
 
           if (hasLongText) {
-              // Apply special sizing if long text is detected
-              pageSize = pageIndex === 0 ? 6 : 8; // 6 for first page, 8 for subsequent
+             if(pageIndex === 0) {
+                 pageSize = 6;
+             } else {
+                 pageSize = 8;
+             }
           }
 
           const chunk = items.slice(currentIndex, currentIndex + pageSize);
@@ -114,23 +120,23 @@ export function DocumentPreview({ formData, settings: propSettings }: DocumentPr
       <table className="w-full border-collapse text-right mt-4">
           <thead>
               <tr className="bg-gray-100">
-                  <th className="border p-1 w-[5%] text-center align-middle">م</th>
+                  <th className="border p-1 w-[5%] cell-center">م</th>
                   <th className="border p-1 w-[45%] text-right align-middle">{docType === 'quote' ? 'البيان' : 'البند'}</th>
-                  <th className="border p-1 w-[10%] text-center align-middle">الوحدة</th>
-                  <th className="border p-1 w-[10%] text-center align-middle">{docType === 'quote' ? 'العدد' : 'الكمية'}</th>
-                  <th className="border p-1 w-[15%] text-center align-middle">السعر</th>
-                  <th className="border p-1 w-[15%] text-center align-middle">الإجمالي</th>
+                  <th className="border p-1 w-[10%] cell-center">الوحدة</th>
+                  <th className="border p-1 w-[10%] cell-center">{docType === 'quote' ? 'العدد' : 'الكمية'}</th>
+                  <th className="border p-1 w-[15%] cell-center">السعر</th>
+                  <th className="border p-1 w-[15%] cell-center">الإجمالي</th>
               </tr>
           </thead>
           <tbody>
               {chunk.map((item, index) => (
                   <tr key={startIndex + index}>
-                      <td className="border p-1 align-middle text-center">{startIndex + index + 1}</td>
-                      <td className="border p-1 align-top whitespace-pre-wrap">{item.description || ''}</td>
-                      <td className="border p-1 align-middle text-center">{item.unit}</td>
-                      <td className="border p-1 align-middle text-center">{item.quantity}</td>
-                      <td className="border p-1 align-middle text-center">{formatCurrency(item.price || 0)}</td>
-                      <td className="border p-1 align-middle text-center">{formatCurrency((item.quantity || 0) * (item.price || 0))}</td>
+                      <td className="border p-1 cell-center">{startIndex + index + 1}</td>
+                      <td className="border p-1 cell-top-right">{item.description || ''}</td>
+                      <td className="border p-1 cell-center">{item.unit}</td>
+                      <td className="border p-1 cell-center">{item.quantity}</td>
+                      <td className="border p-1 cell-center">{formatCurrency(item.price || 0)}</td>
+                      <td className="border p-1 cell-center">{formatCurrency((item.quantity || 0) * (item.price || 0))}</td>
                   </tr>
               ))}
           </tbody>
@@ -149,7 +155,7 @@ export function DocumentPreview({ formData, settings: propSettings }: DocumentPr
                   </>
               )}
           </div>
-          <div className="w-2/5 max-w-xs">
+          <div className="w-2/5 max-w-[280px]">
               <table className="w-full border-collapse text-right">
                   <tbody>
                       <tr>
