@@ -2,6 +2,7 @@
 "use client";
 
 import type { DocumentItem } from "./types";
+// import html2pdf from "html2pdf.js"; - We will import this dynamically
 
 /**
  * Converts an array of items to a CSV string.
@@ -17,11 +18,31 @@ function convertToCSV(items: DocumentItem[]): string {
 }
 
 /**
- * Triggers the browser's print dialog to save the page as a PDF.
- * This function relies on CSS @media print rules to style the output.
+ * Exports a given HTML element to a PDF file using html2pdf.js.
+ * This method ensures high fidelity and captures the preview as accurately as possible.
  */
 export async function exportToPdf() {
-    window.print();
+    const element = document.getElementById('printable-area');
+    if (!element) {
+        throw new Error("Printable area not found.");
+    }
+
+    // Dynamically import html2pdf.js only on the client-side
+    const html2pdf = (await import('html2pdf.js')).default;
+    
+    const options = {
+      margin: 0,
+      filename: `document_${new Date().toISOString().slice(0, 10)}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { 
+        scale: 4, // Higher scale for better resolution
+        useCORS: true, // Important for external images/fonts
+        logging: false,
+      },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    return html2pdf().from(element).set(options).save();
 }
 
 
@@ -73,6 +94,13 @@ export async function exportToWord(element: HTMLElement, fileName:string) {
         <style>
             /* All the CSS from the document is injected here */
             ${styles}
+            @page {
+                size: A4;
+                margin: 10mm 15mm 15mm 15mm;
+            }
+            .a4-page {
+                page-break-after: always;
+            }
         </style>
       </head>
       <body lang="AR-SA" dir="RTL">

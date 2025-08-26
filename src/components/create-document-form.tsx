@@ -256,6 +256,19 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
       // hideLoading() will be called when the next page loads if successful
     }
   }
+  
+  const handlePdfExport = async () => {
+      setIsExporting(true);
+      try {
+        await exportToPdf();
+        toast({ title: "نجاح", description: `جاري تجهيز ملف PDF...` });
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : `فشل تصدير الملف كـ PDF`;
+        toast({ variant: "destructive", title: "خطأ في التصدير", description: errorMessage });
+      } finally {
+        setIsExporting(false);
+      }
+  }
 
   const handleExport = async (format: 'word' | 'excel') => {
       setIsExporting(true);
@@ -263,7 +276,7 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
       
       try {
           if (format === 'word') {
-              const elementToExport = document.getElementById('document-preview-container');
+              const elementToExport = document.getElementById('printable-area');
               if (!elementToExport) {
                 toast({ variant: "destructive", title: "خطأ", description: "عنصر المعاينة غير موجود." });
                 setIsExporting(false);
@@ -307,8 +320,8 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
     };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start" id="form-and-preview">
-      <div className="no-print">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+      <div>
         <Card>
           <CardHeader>
             <div className="flex justify-between items-center">
@@ -540,7 +553,7 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
 
 
                 <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4">
-                  <Button type="button" variant="outline" onClick={exportToPdf} disabled={isExporting}>
+                  <Button type="button" variant="outline" onClick={handlePdfExport} disabled={isExporting}>
                     {isExporting ? <Loader2 className="ms-2 h-4 w-4 animate-spin" /> : <Printer className="ms-2 h-4 w-4" />}
                     PDF
                   </Button>
@@ -561,7 +574,7 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
 
       <div className="sticky top-20">
         <Card>
-          <CardHeader className="no-print">
+          <CardHeader>
             <CardTitle>معاينة المستند</CardTitle>
           </CardHeader>
           <CardContent>
@@ -580,5 +593,3 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
     </div>
   );
 }
-
-    
