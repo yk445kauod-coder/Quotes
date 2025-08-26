@@ -143,18 +143,25 @@ export async function saveSettings(settings: SettingsData): Promise<void> {
 export async function getSettings(): Promise<SettingsData> {
     initializeDb();
     const settingsRef = ref(db, 'settings');
+    const defaultSettings: SettingsData = {
+        headerImageUrl: "https://ik.imagekit.io/fpbwa3np7/%D8%A8%D8%B1%D9%86%D8%A7%D9%85%D8%AC%20%D8%B9%D8%B1%D9%88%D8%B6%20%D8%A7%D9%84%D8%A7%D8%B3%D8%B9%D8%A7%D8%B1/header%20-%20Copy.png?updatedAt=1755348570527",
+        footerText: "Company Name\nAddress\nPhone & Email",
+        defaultTerms: "الأسعار شاملة الضريبة\nصالحة لمدة 30 يوم\nالتسليم خلال 15 يوم عمل",
+        defaultPaymentMethod: "نقدا او بأمر دفع على حساب 3913070223277800019 البنك الاهلي فرع كفر الدوار\nاو حساب رقم 5590001000000924 بنك مصر فرع المنتزه",
+        itemsPerPage: 13,
+        showUnitColumn: true,
+        showIndexColumn: true,
+        showQuantityColumn: true,
+        showPriceColumn: true,
+        showTotalColumn: true,
+    };
     try {
         const snapshot = await get(settingsRef);
         if (snapshot.exists()) {
             const settings = snapshot.val();
             // Ensure new fields have default values if they are missing
             return {
-                headerImageUrl: "https://ik.imagekit.io/fpbwa3np7/%D8%A8%D8%B1%D9%86%D8%A7%D9%85%D8%AC%20%D8%B9%D8%B1%D9%88%D8%B6%20%D8%A7%D9%84%D8%A7%D8%B3%D8%B9%D8%A7%D8%B1/header%20-%20Copy.png?updatedAt=1755348570527",
-                footerText: "Company Name\nAddress\nPhone & Email",
-                defaultTerms: "الأسعار شاملة الضريبة\nصالحة لمدة 30 يوم\nالتسليم خلال 15 يوم عمل",
-                defaultPaymentMethod: "نقدا او بأمر دفع على حساب 3913070223277800019 البنك الاهلي فرع كفر الدوار\nاو حساب رقم 5590001000000924 بنك مصر فرع المنتزه",
-                itemsPerPage: 13,
-                showUnitColumn: true,
+                ...defaultSettings,
                 ...settings
             };
         }
@@ -162,14 +169,5 @@ export async function getSettings(): Promise<SettingsData> {
         console.error("Client Error fetching settings:", error);
     }
     // Return default values if no settings are found or on error
-    return {
-        headerImageUrl: "https://ik.imagekit.io/fpbwa3np7/%D8%A8%D8%B1%D9%86%D8%A7%D9%85%D8%AC%20%D8%B9%D8%B1%D9%88%D8%B6%20%D8%A7%D9%84%D8%A7%D8%B3%D8%B9%D8%A7%D8%B1/header%20-%20Copy.png?updatedAt=1755348570527",
-        footerText: "Company Name\nAddress\nPhone & Email",
-        defaultTerms: "الأسعار شاملة الضريبة\nصالحة لمدة 30 يوم\nالتسليم خلال 15 يوم عمل",
-        defaultPaymentMethod: "نقدا او بأمر دفع على حساب 3913070223277800019 البنك الاهلي فرع كفر الدوار\nاو حساب رقم 5590001000000924 بنك مصر فرع المنتزه",
-        itemsPerPage: 13,
-        showUnitColumn: true,
-    };
+    return defaultSettings;
 }
-
-    

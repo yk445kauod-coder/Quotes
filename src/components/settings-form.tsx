@@ -1,3 +1,4 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,6 +23,7 @@ import React, { useState } from "react";
 import { saveSettings } from "@/lib/firebase-client";
 import type { SettingsData } from "@/lib/types";
 import { Switch } from "./ui/switch";
+import { Separator } from "./ui/separator";
 
 const formSchema = z.object({
   headerImageUrl: z.string().url("يجب أن يكون رابطًا صحيحًا."),
@@ -33,7 +35,11 @@ const formSchema = z.object({
     .min(1, "يجب أن يكون العدد 1 على الأقل.")
     .max(17, "يجب أن يكون العدد 17 على الأكثر.")
     .optional(),
+  showIndexColumn: z.boolean().optional(),
   showUnitColumn: z.boolean().optional(),
+  showQuantityColumn: z.boolean().optional(),
+  showPriceColumn: z.boolean().optional(),
+  showTotalColumn: z.boolean().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -51,7 +57,11 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
     defaultValues: {
         ...initialSettings,
         itemsPerPage: initialSettings.itemsPerPage || 13,
-        showUnitColumn: initialSettings.showUnitColumn === false ? false : true,
+        showIndexColumn: initialSettings.showIndexColumn !== false,
+        showUnitColumn: initialSettings.showUnitColumn !== false,
+        showQuantityColumn: initialSettings.showQuantityColumn !== false,
+        showPriceColumn: initialSettings.showPriceColumn !== false,
+        showTotalColumn: initialSettings.showTotalColumn !== false,
     },
   });
 
@@ -167,27 +177,99 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
                   </FormItem>
                 )}
               />
-
-              <FormField
-                control={form.control}
-                name="showUnitColumn"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                      <FormLabel>إظهار عمود الوحدة</FormLabel>
-                      <FormDescription>
-                        في حالة التفعيل، سيتم عرض عمود "الوحدة" في جدول البنود.
-                      </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
+              
+              <Separator />
+              <div className="space-y-4">
+                  <h3 className="text-lg font-medium">إعدادات الأعمدة</h3>
+                  <FormDescription>
+                    تحكم في الأعمدة التي تظهر في جدول البنود. عمود "البيان" يظهر دائماً.
+                  </FormDescription>
+                  <FormField
+                    control={form.control}
+                    name="showIndexColumn"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel>إظهار عمود الرقم (م)</FormLabel>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="showUnitColumn"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel>إظهار عمود الوحدة</FormLabel>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="showQuantityColumn"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel>إظهار عمود الكمية/العدد</FormLabel>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="showPriceColumn"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel>إظهار عمود السعر</FormLabel>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="showTotalColumn"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel>إظهار عمود الإجمالي</FormLabel>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+              </div>
 
 
               <div className="flex justify-end">
@@ -202,5 +284,3 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
       </Card>
   );
 }
-
-    

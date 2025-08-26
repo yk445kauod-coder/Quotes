@@ -30,6 +30,8 @@ export interface SettingsData {
   defaultPaymentMethod?: string;
   itemsPerPage?: number;
   showUnitColumn?: boolean;
+  showIndexColumn?: boolean;
+  showQuantityColumn?: boolean;
+  showPriceColumn?: boolean;
+  showTotalColumn?: boolean;
 }
-
-    
