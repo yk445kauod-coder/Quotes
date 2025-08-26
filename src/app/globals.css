@@ -156,7 +156,18 @@
         box-shadow: none !important;
         border: none !important;
         page-break-after: always; /* Ensure each styled page becomes a real page */
+        color: #1a1a1a; /* Set text to a dark gray (90% black) */
     }
+    
+    .a4-page th,
+    .a4-page td {
+        border-color: #bababa; /* Slightly lighter border color */
+    }
+
+    .a4-page > footer {
+        border-color: #1a1a1a;
+    }
+
 
     .a4-page:last-child {
         page-break-after: avoid;
