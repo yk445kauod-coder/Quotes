@@ -186,12 +186,13 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
       const docId = currentDocumentData.docId || 'document';
       try {
           if (format === 'pdf') {
-              await exportToPdf(currentDocumentData, docId);
+              await exportToPdf(docId);
           } else if (format === 'word') {
-              await exportToWord(currentDocumentData, docId);
+              await exportToWord(docId);
           } else if (format === 'excel') {
               exportToExcel(watchedItems, docId);
           }
+           toast({ title: "نجاح", description: `جاري تجهيز ملف ${format.toUpperCase()}...` });
       } catch (error) {
           const errorMessage = error instanceof Error ? error.message : `فشل تصدير الملف كـ ${format}`;
           toast({ variant: "destructive", title: "خطأ في التصدير", description: errorMessage });

@@ -1,38 +1,8 @@
 
 "use client";
 
-import type { DocumentData, DocumentItem, SettingsData } from "./types";
-import { getSettings } from "./firebase-client";
+import type { DocumentData, DocumentItem } from "./types";
 import { formatCurrency } from "./utils";
-
-
-/**
- * Converts an image URL to a Base64 string.
- * Uses a proxy to avoid CORS issues.
- * @param url The URL of the image.
- * @returns A promise that resolves with the Base64 string.
- */
-async function imageToBase64(url: string): Promise<string> {
-    if (!url) return "";
-    try {
-        // Using a more reliable proxy
-        const response = await fetch(`https://images.weserv.nl/?url=${encodeURIComponent(url)}`);
-        if (!response.ok) {
-            throw new Error(`Proxy fetch failed: ${response.statusText}`);
-        }
-        const blob = await response.blob();
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
-        });
-    } catch (e) {
-        console.error("Failed to convert image to Base64:", e);
-        // Fallback transparent pixel if all methods fail
-        return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
-    }
-}
 
 
 /**
@@ -49,131 +19,18 @@ function convertToCSV(items: DocumentItem[]): string {
 }
 
 /**
- * Builds a self-contained HTML string for a document, suitable for PDF/Word export.
- * This function handles pagination correctly.
- * @param docData The document data.
- * @param settings The application settings.
- * @returns A promise resolving to the full HTML string.
+ * Builds a self-contained HTML string for a document, suitable for PDF/Word export,
+ * by cloning the preview element and adding necessary styles.
+ * @param previewElement The live preview DOM element.
+ * @returns A full HTML string ready for export.
  */
-async function buildExportHtml(docData: DocumentData, settings: SettingsData): Promise<string> {
-    const headerImageBase64 = settings.headerImageUrl ? await imageToBase64(settings.headerImageUrl) : '';
+function buildExportHtml(previewElement: HTMLElement): string {
+    const clone = previewElement.cloneNode(true) as HTMLElement;
 
-    const today = new Date(docData.createdAt).toLocaleDateString('en-CA'); // YYYY-MM-DD
-    const docTypeName = docData.docType === 'quote' ? 'عرض سعر' : 'مقايسة';
-    const docIdText = docData.docId || '[سيتم إنشاؤه عند الحفظ]';
+    // Ensure all dynamic content is fully rendered in the clone if needed (usually it is)
+    // For this app, the preview is self-contained, so a direct clone is sufficient.
 
-    const ITEMS_PER_PAGE = 14;
-    const itemPages = [];
-    for (let i = 0; i < docData.items.length; i += ITEMS_PER_PAGE) {
-        itemPages.push(docData.items.slice(i, i + ITEMS_PER_PAGE));
-    }
-    
-    const totalPages = itemPages.length;
-
-    const renderItemsTable = (items: DocumentItem[], startIndex: number) => {
-        const rows = items.map((item, index) => `
-            <tr style="page-break-inside: avoid;">
-                <td style="border: 1px solid #333; padding: 6px; text-align: center; vertical-align: top; width: 5%;">${startIndex + index + 1}</td>
-                <td style="border: 1px solid #333; padding: 6px; white-space: pre-wrap; vertical-align: top; text-align: right; line-height: 1.5; width: 50%;">${item.description || ''}</td>
-                <td style="border: 1px solid #333; padding: 6px; text-align: center; vertical-align: top; width: 10%;">${item.unit}</td>
-                <td style="border: 1px solid #333; padding: 6px; text-align: center; vertical-align: top; width: 10%;">${item.quantity}</td>
-                <td style="border: 1px solid #333; padding: 6px; text-align: right; vertical-align: top; width: 12.5%;">${formatCurrency(item.price || 0)}</td>
-                <td style="border: 1px solid #333; padding: 6px; text-align: right; vertical-align: top; width: 12.5%;">${formatCurrency((item.quantity || 0) * (item.price || 0))}</td>
-            </tr>
-        `).join('');
-
-        return `
-            <table class="items-table" style="width: 100%; border-collapse: collapse; font-size: 10pt;">
-                <thead>
-                    <tr>
-                        <th style="border: 1px solid #333; padding: 8px; text-align: center; font-weight: bold; width: 5%;">م</th>
-                        <th style="border: 1px solid #333; padding: 8px; text-align: right; font-weight: bold; width: 50%;">البيان</th>
-                        <th style="border: 1px solid #333; padding: 8px; text-align: center; font-weight: bold; width: 10%;">الوحدة</th>
-                        <th style="border: 1px solid #333; padding: 8px; text-align: center; font-weight: bold; width: 10%;">العدد</th>
-                        <th style="border: 1px solid #333; padding: 8px; text-align: right; font-weight: bold; width: 12.5%;">السعر</th>
-                        <th style="border: 1px solid #333; padding: 8px; text-align: right; font-weight: bold; width: 12.5%;">الإجمالي</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${rows}
-                </tbody>
-            </table>
-        `;
-    };
-
-    const summarySection = `
-      <div class="summary-section" style="page-break-before: auto; page-break-inside: avoid;">
-        <table style="width: 100%; margin-top: 20px; border: none;">
-            <tr>
-              <td style="width: 60%; vertical-align: top; padding-left: 20px; border: none;">
-                  ${docData.docType === 'quote' ? `
-                      <h3 style="font-weight: bold; margin: 0 0 5px 0; font-size: 11pt; text-align: right;">طريقة الدفع:</h3>
-                      <div style="white-space: pre-wrap; font-size: 10pt; text-align: right; margin-bottom: 15px; line-height: 1.6;">${docData.paymentMethod || ''}</div>
-                      <h3 style="font-weight: bold; margin: 0 0 5px 0; font-size: 11pt; text-align: right;">الشروط العامة:</h3>
-                      <div style="white-space: pre-wrap; font-size: 10pt; text-align: right; line-height: 1.6;">${docData.terms || ''}</div>
-                  ` : ''}
-              </td>
-              <td style="width: 40%; vertical-align: top; border: none;">
-                  <table style="width: 100%; border-collapse: collapse; font-size: 10pt;">
-                      <tbody>
-                          <tr>
-                              <td style="border: 1px solid #333; padding: 8px; font-weight: bold; text-align: right;">المجموع قبل الضريبة</td>
-                              <td style="border: 1px solid #333; padding: 8px; text-align: right;">${formatCurrency(docData.subTotal)}</td>
-                          </tr>
-                          <tr>
-                              <td style="border: 1px solid #333; padding: 8px; font-weight: bold; text-align: right;">الضريبة (14%)</td>
-                              <td style="border: 1px solid #333; padding: 8px; text-align: right;">${formatCurrency(docData.taxAmount)}</td>
-                          </tr>
-                          <tr>
-                              <td style="border: 1px solid #333; padding: 8px; font-weight: bold; background-color: #eee; text-align: right;">الإجمالي</td>
-                              <td style="border: 1px solid #333; padding: 8px; font-weight: bold; background-color: #eee; text-align: right;">${formatCurrency(docData.total)}</td>
-                          </tr>
-                      </tbody>
-                  </table>
-              </td>
-            </tr>
-        </table>
-      </div>
-    `;
-
-    let pagesHtml = '';
-    itemPages.forEach((pageItems, pageIndex) => {
-        let pageContent = '';
-        // Page Header (only on first page)
-        if (pageIndex === 0) {
-            pageContent += `
-                <header class="export-header">
-                    ${headerImageBase64 ? `<img src="${headerImageBase64}" style="width: 100%; height: auto; display: block; max-height: 150px; object-fit: contain;">` : ''}
-                </header>
-                 <table style="width: 100%; margin-bottom: 15px; font-size: 11pt; border: none;">
-                  <tr>
-                    <td style="text-align: right; border: none;"><strong>السادة/</strong> ${docData.clientName || ''}</td>
-                    <td style="text-align: left; border: none;"><strong>التاريخ:</strong> ${today}</td>
-                  </tr>
-                  <tr>
-                    <td style="text-align: right; border: none;"><strong>الموضوع/</strong> ${docData.subject || ''}</td>
-                    <td style="text-align: left; border: none;"><strong>${docTypeName} رقم:</strong> ${docIdText}</td>
-                  </tr>
-                </table>
-                <div style="text-align: right; margin-bottom: 15px; font-size: 11pt;">
-                  <p style="margin:0;">تحية طيبة وبعد،،</p>
-                  <p style="margin:0;">بالإشارة إلى الموضوع أعلاه نتشرف بتقديم عرض أسعارنا كما يلي:</p>
-                </div>
-            `;
-        }
-
-        // Items Table for the current page
-        pageContent += renderItemsTable(pageItems, pageIndex * ITEMS_PER_PAGE);
-        
-        // Add summary section ONLY on the last page
-        if (pageIndex === totalPages - 1) {
-            pageContent += summarySection;
-        }
-
-        pagesHtml += `<div class="page-container">${pageContent}</div>`;
-    });
-    
-    const footerTextHorizontal = (settings.footerText || '').replace(/\n/g, '  <span style="margin: 0 10px;">/</span>  ');
+    const htmlContent = clone.outerHTML;
 
     return `
       <!DOCTYPE html>
@@ -184,39 +41,84 @@ async function buildExportHtml(docData: DocumentData, settings: SettingsData): P
           <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
           <link href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&display=swap" rel="stylesheet" />
           <style>
+            /* Reset and base styles for export */
             body { 
               font-family: 'PT Sans', 'Arial', sans-serif; 
               direction: rtl; 
-              font-size: 10pt; 
               line-height: 1.4; 
               color: #000;
               margin: 0;
               -webkit-print-color-adjust: exact !important;
               print-color-adjust: exact !important;
+              background-color: #fff; /* Ensure background is white */
             }
+            /* Page setup for A4 */
             @page {
-              size: A4;
-              margin: 15mm 15mm 25mm 15mm; /* top, right, bottom, left */
+              size: A4 portrait;
+              margin: 15mm 15mm 20mm 15mm; /* top, right, bottom, left */
             }
-            .page-container {
-                page-break-after: always;
+
+            /* Main container for Word compatibility */
+            .word-body {
+              width: 210mm;
+              height: 297mm;
             }
-            .page-container:last-of-type {
-                 page-break-after: avoid;
+             div.WordSection1 {
+                page: WordSection1;
             }
-            .export-header {
-                width: 100%; 
-                margin-bottom: 10px;
+
+            /* Ensure the preview container itself doesn't have conflicting styles */
+            #document-preview {
+              box-shadow: none !important;
+              border: none !important;
+              background-color: #fff !important;
+              color: #000 !important;
+              padding: 0 !important;
+              font-size: 10pt;
             }
-            .items-table thead {
-                display: table-header-group; /* Important for repeating headers */
-                background-color: #36454F; 
-                color: white;
+            #document-preview header, 
+            #document-preview footer {
+               position: static !important; /* Override sticky/fixed positioning for export */
             }
-             .items-table tbody {
+
+            /* Table styles */
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                page-break-inside: auto;
+            }
+            
+            thead {
+                display: table-header-group; /* Crucial for repeating headers */
+            }
+
+            tbody {
                 display: table-row-group;
             }
-            .export-footer {
+
+            tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+            }
+            
+            td, th {
+              page-break-inside: avoid;
+              border: 1px solid #ccc; /* Use a lighter border for a cleaner look */
+              padding: 5px;
+            }
+            th {
+                background-color: #f2f2f2 !important; /* Ensure header bg prints */
+                font-weight: bold;
+            }
+             .document-preview-table .bg-gray-100 {
+                background-color: #f2f2f2 !important;
+             }
+             .whitespace-pre-wrap {
+                white-space: pre-wrap !important;
+             }
+
+            /* Footer specific styles */
+            footer {
                 position: fixed;
                 bottom: 0;
                 left: 15mm;
@@ -228,45 +130,37 @@ async function buildExportHtml(docData: DocumentData, settings: SettingsData): P
                 box-sizing: border-box;
                 border-top: 2px solid black;
             }
-            table {
-                border-collapse: collapse;
+            .no-print {
+              display: none !important;
             }
-            th, td {
-                border: 1px solid #333;
-                text-align: right;
-            }
-            /* Word specific */
-             .word-body {
-              width: 210mm;
-              height: 297mm;
-            }
-            div.WordSection1 {
-                page: WordSection1;
+             .summary-section {
+                page-break-before: auto;
+                page-break-inside: avoid;
             }
           </style>
         </head>
         <body>
-            <div class="content-wrapper">
-              ${pagesHtml}
+            <div class="WordSection1 word-body">
+              ${htmlContent}
             </div>
-            <footer class="export-footer">
-                ${footerTextHorizontal}
-            </footer>
         </body>
       </html>
     `;
 }
 
-export async function exportToPdf(docData: DocumentData, fileName: string) {
+export async function exportToPdf(fileName: string) {
+    const previewElement = document.getElementById('document-preview');
+    if (!previewElement) {
+        throw new Error("Preview element not found.");
+    }
     const html2pdf = (await import('html2pdf.js')).default;
-    const settings = await getSettings();
-    const htmlContent = await buildExportHtml(docData, settings);
+    const htmlContent = buildExportHtml(previewElement);
 
     const opt = {
         margin: 0, // Margins are handled by the @page CSS rule
         filename: `${fileName}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, logging: false },
+        html2canvas: { scale: 2, useCORS: true, logging: false, scrollY: -window.scrollY },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
         pagebreak: { mode: ['css', 'legacy'] }
     };
@@ -276,16 +170,13 @@ export async function exportToPdf(docData: DocumentData, fileName: string) {
 }
 
 
-export async function exportToWord(docData: DocumentData, fileName:string) {
-    const settings = await getSettings();
-    const sourceHTML = await buildExportHtml(docData, settings);
-    
-    // Use the main body of the generated HTML, not the full document
-    const bodyMatch = sourceHTML.match(/<body[^>]*>([\s\S]*)<\/body>/i);
-    const bodyContent = bodyMatch ? bodyMatch[1] : sourceHTML;
+export async function exportToWord(fileName:string) {
+    const previewElement = document.getElementById('document-preview');
+    if (!previewElement) {
+        throw new Error("Preview element not found.");
+    }
+    const sourceHTML = buildExportHtml(previewElement);
 
-
-    // Adding Word-specific XML and header to ensure proper RTL display and structure
     const wordHtml = `
       <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
       <head>
@@ -298,56 +189,22 @@ export async function exportToWord(docData: DocumentData, fileName:string) {
             <w:Zoom>100</w:Zoom>
             <w:DoNotOptimizeForBrowser/>
             <w:RtlGutter/>
+            <w:WordDrawingGridHorizontalSpacing>0</w:WordDrawingGridHorizontalSpacing>
+            <w:WordDrawingGridVerticalSpacing>0</w:WordDrawingGridVerticalSpacing>
           </w:WordDocument>
           <w:LatentStyles DefLockedState="false" DefUnhideWhenUsed="true"
             DefSemiHidden="true" DefQFormat="false" DefPriority="99"
             LatentStyleCount="267">
-            <w:LsdException Locked="false" Priority="0" SemiHidden="false"
-            UnhideWhenUsed="false" QFormat="true" Name="Normal"/>
-            <w:LsdException Locked="false" Priority="9" SemiHidden="false"
-            UnhideWhenUsed="false" QFormat="true" Name="heading 1"/>
-            <w:LsdException Locked="false" Priority="10" QFormat="true" Name="Title"/>
-            <w:LsdException Locked="false" Priority="11" QFormat="true" Name="Subtitle"/>
           </w:LatentStyles>
         </xml>
         <![endif]-->
         <style>
-            @page WordSection1 {
-                size: 21cm 29.7cm; /* A4 */
-                margin: 1.5cm;
-                mso-header-margin: .5in;
-                mso-footer-margin: .5in;
-                mso-paper-source: 0;
-            }
-            body {
-              font-family: 'PT Sans', Arial, sans-serif;
-              direction: rtl;
-            }
-            div.WordSection1 {
-                page: WordSection1;
-            }
-            table {
-                border-collapse: collapse;
-                width: 100%;
-                page-break-inside: auto;
-            }
-            tr { 
-                page-break-inside: avoid; 
-                page-break-after: auto 
-            }
-            thead { display: table-header-group; }
-            td, th {
-                border: 1px solid black;
-                padding: 5px;
-                text-align: right;
-                page-break-inside: avoid;
-            }
-            .export-footer { display: none; }
+          ${sourceHTML.match(/<style>([\s\S]*)<\/style>/i)?.[1] || ''}
         </style>
       </head>
       <body lang=AR-SA>
         <div class="WordSection1 word-body">
-            ${bodyContent}
+            ${sourceHTML.match(/<body[^>]*>([\s\S]*)<\/body>/i)?.[1] || ''}
         </div>
       </body>
       </html>`;
