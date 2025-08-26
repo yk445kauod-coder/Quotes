@@ -1,4 +1,3 @@
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -38,8 +37,6 @@ import {
   Save,
   FileDown,
   Loader2,
-  Wand2,
-  Sparkles,
 } from "lucide-react";
 import { saveDocument, updateDocument } from "@/lib/firebase-client";
 import { formatCurrency } from "@/lib/utils";
@@ -87,8 +84,6 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
   const { showLoading, hideLoading } = useLoading();
   const [isSaving, setIsSaving] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
-  const [isSuggesting, setIsSuggesting] = useState(false);
-  const [isSuggestingItem, setIsSuggestingItem] = useState<number | null>(null);
   const isEditMode = !!existingDocument;
 
 
@@ -129,7 +124,6 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
   const taxAmount = subTotal * 0.14;
   const total = subTotal + taxAmount;
   
-  const watchedDocType = form.watch("docType");
   const watchedAll = form.watch();
 
   const currentDocumentData: DocumentData = {
@@ -222,84 +216,6 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
       } finally {
           setIsExporting(false);
       }
-  };
-
-
-  const handleSmartSuggestions = async () => {
-    setIsSuggesting(true);
-    try {
-      const docDetails = {
-        docType: form.getValues("docType"),
-        subject: form.getValues("subject"),
-        clientName: form.getValues("clientName"),
-      };
-
-      const response = await fetch('/api/smart-suggestions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(docDetails),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'فشل الاتصال بالـ API');
-      }
-
-      const suggestions = await response.json();
-      form.setValue("terms", suggestions.suggestedTerms);
-      // We don't set payment method from suggestions anymore
-      toast({
-        title: "تم!",
-        description: "تم إنشاء اقتراحات للشروط بنجاح.",
-      });
-
-    } catch (error) {
-       const errorMessage = error instanceof Error ? error.message : "فشل إنشاء الاقتراحات.";
-       toast({
-         variant: "destructive",
-         title: "خطأ في الذكاء الاصطناعي",
-         description: errorMessage,
-       });
-    } finally {
-      setIsSuggesting(false);
-    }
-  };
-
-  const handleItemDescriptionSuggestion = async (index: number) => {
-    setIsSuggestingItem(index);
-    try {
-        const currentDescription = form.getValues(`items.${index}.description`);
-
-        const itemContext = {
-            docType: form.getValues("docType"),
-            subject: form.getValues("subject"),
-            currentItemDescription: currentDescription || "new item",
-        };
-
-        const response = await fetch('/api/item-description', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(itemContext),
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'فشل الاتصال بالـ API');
-        }
-
-        const suggestion = await response.json();
-        form.setValue(`items.${index}.description`, suggestion);
-
-    } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "فشل إنشاء وصف البند.";
-        toast({
-            variant: "destructive",
-            title: "خطأ في الذكاء الاصطناعي",
-            description: errorMessage,
-        });
-    } finally {
-        setIsSuggestingItem(null);
-    }
   };
   
 
@@ -397,17 +313,6 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
                                 </FormControl>
                               )}
                             />
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="absolute top-1 left-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                                onClick={() => handleItemDescriptionSuggestion(index)}
-                                disabled={isSuggestingItem === index}
-                                title="اقتراح وصف"
-                            >
-                                {isSuggestingItem === index ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4 text-primary" />}
-                            </Button>
                           </TableCell>
                            <TableCell className="p-1 align-middle">
                             <FormField
@@ -470,21 +375,11 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
                 </div>
               </div>
               
-              {watchedDocType === 'quote' && (
+              {watchedAll.docType === 'quote' && (
                 <>
                     <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                        <FormLabel htmlFor="terms">الشروط</FormLabel>
-                        <Button 
-                            type="button" 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={handleSmartSuggestions} 
-                            disabled={isSuggesting || defaultSettings?.pinTermsAndPayment}
-                        >
-                            {isSuggesting ? <Loader2 className="ms-2 h-4 w-4 animate-spin" /> : <Wand2 className="ms-2 h-4 w-4" />}
-                            اقتراح شروط
-                        </Button>
+                          <FormLabel htmlFor="terms">الشروط</FormLabel>
                         </div>
                         <FormField
                             control={form.control}
@@ -519,14 +414,6 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
 
 
               <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4">
-                 <div id="document-export-target" className="hidden">
-                    <div id="document-preview-container-for-export" className="a4-container">
-                         <DocumentPreview 
-                            formData={currentDocumentData} 
-                            settings={defaultSettings}
-                         />
-                    </div>
-                 </div>
                  <Button type="button" variant="outline" onClick={() => handleExport('pdf')} disabled={isExporting}>
                    {isExporting ? <Loader2 className="ms-2 h-4 w-4 animate-spin" /> : <FileDown className="ms-2 h-4 w-4" />}
                    PDF
@@ -551,8 +438,8 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
             <CardTitle>معاينة المستند</CardTitle>
           </CardHeader>
           <CardContent>
-            <div id="document-export-target">
-              <div className="w-full bg-gray-100 p-8 rounded-lg shadow-inner overflow-auto max-h-[80vh] no-print">
+            <div id="document-export-target" className="no-print">
+              <div className="w-full bg-gray-100 p-8 rounded-lg shadow-inner overflow-auto max-h-[80vh]">
                   <div id="document-preview-container">
                       <DocumentPreview 
                           formData={currentDocumentData} 
@@ -567,6 +454,3 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
     </div>
   );
 }
-
-
-    
