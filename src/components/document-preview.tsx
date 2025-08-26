@@ -87,8 +87,8 @@ export function DocumentPreview({ formData, settings: propSettings, columnVisibi
 
   const docTypeName = docType === 'quote' ? 'عرض سعر' : 'مقايسة';
   const date = new Date();
-  const year = formatNumberToHindi(date.getFullYear());
-  const today = `${formatNumberToHindi(date.getDate())} / ${formatNumberToHindi(date.getMonth() + 1)} / ${year}`;
+  const year = date.getFullYear();
+  const today = `${formatNumberToHindi(date.getDate())} / ${formatNumberToHindi(date.getMonth() + 1)} / ${formatNumberToHindi(year)}`;
   const docIdText = docId ? formatTextWithHindiNumerals(docId) : '[سيتم إنشاؤه عند الحفظ]';
 
   // Smart Paging Logic:
@@ -177,7 +177,7 @@ export function DocumentPreview({ formData, settings: propSettings, columnVisibi
                           <td className="border p-1 cell-center">{formatCurrency(subTotal)}</td>
                       </tr>
                       <tr>
-                          <td className="border p-1 font-bold cell-center">الضريبة ١٤٪</td>
+                          <td className="border p-1 font-bold cell-center">{formatTextWithHindiNumerals('الضريبة 14%')}</td>
                           <td className="border p-1 cell-center">{formatCurrency(taxAmount)}</td>
                       </tr>
                       <tr>
