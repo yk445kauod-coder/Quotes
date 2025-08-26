@@ -21,6 +21,7 @@ import { Loader2, Save } from "lucide-react";
 import React, { useState } from "react";
 import { saveSettings } from "@/lib/firebase-client";
 import type { SettingsData } from "@/lib/types";
+import { Switch } from "./ui/switch";
 
 const formSchema = z.object({
   headerImageUrl: z.string().url("يجب أن يكون رابطًا صحيحًا."),
@@ -32,6 +33,7 @@ const formSchema = z.object({
     .min(1, "يجب أن يكون العدد 1 على الأقل.")
     .max(17, "يجب أن يكون العدد 17 على الأكثر.")
     .optional(),
+  showUnitColumn: z.boolean().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -49,6 +51,7 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
     defaultValues: {
         ...initialSettings,
         itemsPerPage: initialSettings.itemsPerPage || 13,
+        showUnitColumn: initialSettings.showUnitColumn === false ? false : true,
     },
   });
 
@@ -165,6 +168,28 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
                 )}
               />
 
+              <FormField
+                control={form.control}
+                name="showUnitColumn"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel>إظهار عمود الوحدة</FormLabel>
+                      <FormDescription>
+                        في حالة التفعيل، سيتم عرض عمود "الوحدة" في جدول البنود.
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+
               <div className="flex justify-end">
                 <Button type="submit" disabled={isSaving}>
                   {isSaving ? <Loader2 className="ms-2 h-4 w-4 animate-spin" /> : <Save className="ms-2 h-4 w-4" />}
@@ -177,3 +202,5 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
       </Card>
   );
 }
+
+    

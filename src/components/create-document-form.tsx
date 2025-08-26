@@ -248,7 +248,7 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
                   <FormItem>
                     <FormLabel>السادة/</FormLabel>
                     <FormControl>
-                      <Input placeholder="اسم العميل أو الجهة" {...field} />
+                      <Textarea placeholder="اسم العميل أو الجهة" {...field} rows={2}/>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -442,3 +442,5 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
     </div>
   );
 }
+
+    

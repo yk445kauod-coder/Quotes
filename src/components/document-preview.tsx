@@ -68,6 +68,7 @@ export function DocumentPreview({ formData, settings: propSettings }: DocumentPr
     headerImageUrl: settings?.headerImageUrl || "https://ik.imagekit.io/fpbwa3np7/%D8%A8%D8%B1%D9%86%D8%A7%D9%85%D8%AC%20%D8%B9%D8%B1%D9%88%D8%B6%20%D8%A7%D9%84%D8%A7%D8%B3%D8%B9%D8%A7%D8%B1/header%20-%20Copy.png?updatedAt=1755348570527",
     footerText: settings?.footerText || "Footer text not set",
     itemsPerPage: settings?.itemsPerPage || 17,
+    showUnitColumn: settings?.showUnitColumn === false ? false : true,
   }
 
   const docTypeName = docType === 'quote' ? 'عرض سعر' : 'مقايسة';
@@ -118,7 +119,7 @@ export function DocumentPreview({ formData, settings: propSettings }: DocumentPr
               <tr className="bg-gray-100">
                   <th className="border p-1 w-[5%] cell-center">م</th>
                   <th className="border p-1 w-[45%] cell-center">{docType === 'quote' ? 'البيان' : 'البند'}</th>
-                  <th className="border p-1 w-[10%] cell-center">الوحدة</th>
+                  {resolvedSettings.showUnitColumn && <th className="border p-1 w-[10%] cell-center">الوحدة</th>}
                   <th className="border p-1 w-[10%] cell-center">{docType === 'quote' ? 'العدد' : 'الكمية'}</th>
                   <th className="border p-1 w-[15%] cell-center">السعر</th>
                   <th className="border p-1 w-[15%] cell-center">الإجمالي</th>
@@ -129,7 +130,7 @@ export function DocumentPreview({ formData, settings: propSettings }: DocumentPr
                   <tr key={startIndex + index}>
                       <td className="border p-1 cell-center">{formatNumberToHindi(startIndex + index + 1)}</td>
                       <td className="border p-1 cell-top-right">{formatTextWithHindiNumerals(item.description || '')}</td>
-                      <td className="border p-1 cell-center">{item.unit}</td>
+                      {resolvedSettings.showUnitColumn && <td className="border p-1 cell-center">{item.unit}</td>}
                       <td className="border p-1 cell-center">{formatNumberToHindi(item.quantity || 0)}</td>
                       <td className="border p-1 cell-center">{formatCurrency(item.price || 0)}</td>
                       <td className="border p-1 cell-center">{formatCurrency((item.quantity || 0) * (item.price || 0))}</td>
@@ -202,7 +203,7 @@ export function DocumentPreview({ formData, settings: propSettings }: DocumentPr
                           <span>التاريخ: {today}</span>
                           <span>{docTypeName} رقم: {docIdText}</span>
                       </div>
-                      <div className="mb-2 text-sm">
+                      <div className="mb-2 text-sm whitespace-pre-wrap">
                           <p><span className="font-bold">السادة/</span> {clientName}</p>
                           <p><span className="font-bold">الموضوع:</span> {subject}</p>
                       </div>
@@ -227,3 +228,5 @@ export function DocumentPreview({ formData, settings: propSettings }: DocumentPr
     </>
   );
 }
+
+    

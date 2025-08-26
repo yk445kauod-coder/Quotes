@@ -29,4 +29,7 @@ export interface SettingsData {
   defaultTerms?: string;
   defaultPaymentMethod?: string;
   itemsPerPage?: number;
+  showUnitColumn?: boolean;
 }
+
+    

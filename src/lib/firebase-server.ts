@@ -87,6 +87,7 @@ export async function getSettings(): Promise<SettingsData> {
                 defaultTerms: "الأسعار شاملة الضريبة\nصالحة لمدة 30 يوم\nالتسليم خلال 15 يوم عمل",
                 defaultPaymentMethod: "نقدا او بأمر دفع على حساب 3913070223277800019 البنك الاهلي فرع كفر الدوار\nاو حساب رقم 5590001000000924 بنك مصر فرع المنتزه",
                 itemsPerPage: 13,
+                showUnitColumn: true,
                 ...settings,
             };
         }
@@ -100,5 +101,8 @@ export async function getSettings(): Promise<SettingsData> {
         defaultTerms: "الأسعار شاملة الضريبة\nصالحة لمدة 30 يوم\nالتسليم خلال 15 يوم عمل",
         defaultPaymentMethod: "نقدا او بأمر دفع على حساب 3913070223277800019 البنك الاهلي فرع كفر الدوار\nاو حساب رقم 5590001000000924 بنك مصر فرع المنتزه",
         itemsPerPage: 13,
+        showUnitColumn: true,
     };
 }
+
+    
