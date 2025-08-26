@@ -1,7 +1,7 @@
 
 "use client";
 
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatNumberToHindi } from "@/lib/utils";
 import Image from "next/image";
 import type { DocumentData, SettingsData, DocumentItem } from "@/lib/types";
 import React, { useState, useEffect } from "react";
@@ -127,10 +127,10 @@ export function DocumentPreview({ formData, settings: propSettings }: DocumentPr
           <tbody>
               {chunk.map((item, index) => (
                   <tr key={startIndex + index}>
-                      <td className="border p-1 cell-center">{startIndex + index + 1}</td>
+                      <td className="border p-1 cell-center">{formatNumberToHindi(startIndex + index + 1)}</td>
                       <td className="border p-1 cell-top-right">{item.description || ''}</td>
                       <td className="border p-1 cell-center">{item.unit}</td>
-                      <td className="border p-1 cell-center">{item.quantity}</td>
+                      <td className="border p-1 cell-center">{formatNumberToHindi(item.quantity || 0)}</td>
                       <td className="border p-1 cell-center">{formatCurrency(item.price || 0)}</td>
                       <td className="border p-1 cell-center">{formatCurrency((item.quantity || 0) * (item.price || 0))}</td>
                   </tr>
@@ -218,7 +218,7 @@ export function DocumentPreview({ formData, settings: propSettings }: DocumentPr
             <footer className="w-full mt-auto p-2 border-t-2 border-black text-center text-xs">
               {resolvedSettings?.footerText && <p className="whitespace-pre-wrap">{resolvedSettings.footerText}</p>}
                <div className="mt-1">
-                  صفحة {pageIndex + 1} من {totalPages}
+                  صفحة {formatNumberToHindi(pageIndex + 1)} من {formatNumberToHindi(totalPages)}
               </div>
             </footer>
           </div>
