@@ -102,7 +102,7 @@
         word-wrap: break-word;
     }
     .a4-page > footer {
-        @apply w-full mt-auto p-2 border-t-2 border-black text-center text-xs;
+        @apply w-full mt-auto p-2 text-center text-xs;
         flex-shrink: 0; /* Prevent footer from shrinking */
     }
     /* This class ensures the element breaks to a new page when printing */
@@ -165,7 +165,7 @@
     }
 
     .a4-page > footer {
-        border-color: #1a1a1a;
+        border-color: transparent;
     }
 
 
