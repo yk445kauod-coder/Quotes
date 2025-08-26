@@ -176,7 +176,7 @@ export function DocumentPreview({ formData, settings: propSettings, columnVisibi
                           <td className="border p-1 text-right">{formatCurrency(subTotal)}</td>
                       </tr>
                       <tr>
-                          <td className="border p-1 font-bold">الضريبة (١٤٪)</td>
+                          <td className="border p-1 font-bold">الضريبة ١٤٪</td>
                           <td className="border p-1 text-right">{formatCurrency(taxAmount)}</td>
                       </tr>
                       <tr>
