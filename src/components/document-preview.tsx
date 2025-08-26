@@ -13,13 +13,6 @@ interface DocumentPreviewProps {
   settings?: SettingsData | null;
 }
 
-// Function to check for long text in an item
-const hasLongText = (item: DocumentItem) => {
-    const LONG_TEXT_THRESHOLD = 200; // More than ~3 lines of text
-    return item.description && item.description.length > LONG_TEXT_THRESHOLD;
-};
-
-
 export function DocumentPreview({ formData, settings: propSettings }: DocumentPreviewProps) {
   const [settings, setSettings] = useState<SettingsData | null | undefined>(propSettings);
   const [loading, setLoading] = useState(true);
@@ -81,23 +74,18 @@ export function DocumentPreview({ formData, settings: propSettings }: DocumentPr
   const today = new Date().toLocaleDateString('ar-EG-u-nu-latn', { year: 'numeric', month: '2-digit', day: '2-digit' });
   const docIdText = docId ? docId : '[سيتم إنشاؤه عند الحفظ]';
 
-  // Smart Paging Logic
+  // Smart Paging Logic: 6 items on the first page, 8 on subsequent pages.
   const itemChunks: DocumentItem[][] = [];
   if (items && items.length > 0) {
       let currentIndex = 0;
+      let pageIndex = 0;
+      
       while (currentIndex < items.length) {
-          const defaultPageSize = resolvedSettings.itemsPerPage;
-          const smartPageSize = 6; // Reduced size for pages with long text
-
-          // Look ahead to see if any item in the next potential chunk has long text
-          const lookaheadChunk = items.slice(currentIndex, currentIndex + defaultPageSize);
-          const containsLongText = lookaheadChunk.some(hasLongText);
-
-          const currentPageSize = containsLongText ? smartPageSize : defaultPageSize;
-          
-          const chunk = items.slice(currentIndex, currentIndex + currentPageSize);
+          const pageSize = pageIndex === 0 ? 6 : 8;
+          const chunk = items.slice(currentIndex, currentIndex + pageSize);
           itemChunks.push(chunk);
           currentIndex += chunk.length;
+          pageIndex++;
       }
   } else {
       // Ensure there is at least one page even if there are no items
