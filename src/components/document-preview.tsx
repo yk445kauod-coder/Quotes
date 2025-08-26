@@ -74,15 +74,34 @@ export function DocumentPreview({ formData, settings: propSettings }: DocumentPr
   const today = new Date().toLocaleDateString('ar-EG-u-nu-latn', { year: 'numeric', month: '2-digit', day: '2-digit' });
   const docIdText = docId ? docId : '[سيتم إنشاؤه عند الحفظ]';
 
-  // Smart Paging Logic: 6 items on the first page, 8 on subsequent pages.
+  // Smart Paging Logic:
   const itemChunks: DocumentItem[][] = [];
   if (items && items.length > 0) {
       let currentIndex = 0;
       let pageIndex = 0;
-      
+      const LONG_TEXT_THRESHOLD = 200;
+
       while (currentIndex < items.length) {
-          const pageSize = pageIndex === 0 ? 6 : 8;
-          const chunk = items.slice(currentIndex, currentIndex + pageSize);
+          // Determine the provisional chunk based on settings
+          let provisionalPageSize = resolvedSettings.itemsPerPage;
+          const provisionalChunk = items.slice(currentIndex, currentIndex + provisionalPageSize);
+
+          // Check if any item in the provisional chunk has long text
+          const hasLongText = provisionalChunk.some(
+              item => (item.description || '').length > LONG_TEXT_THRESHOLD
+          );
+          
+          let actualPageSize;
+
+          if (hasLongText) {
+              // Apply special sizing if long text is detected
+              actualPageSize = pageIndex === 0 ? 6 : 8;
+          } else {
+              // Otherwise, use the size from settings
+              actualPageSize = provisionalPageSize;
+          }
+
+          const chunk = items.slice(currentIndex, currentIndex + actualPageSize);
           itemChunks.push(chunk);
           currentIndex += chunk.length;
           pageIndex++;
