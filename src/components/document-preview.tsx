@@ -84,25 +84,21 @@ export function DocumentPreview({ formData, settings: propSettings }: DocumentPr
       while (currentIndex < items.length) {
           let pageSize = resolvedSettings.itemsPerPage;
           
-          const potentialChunk = items.slice(currentIndex);
+          const potentialChunk = items.slice(currentIndex, currentIndex + pageSize);
           const hasLongText = potentialChunk.some(
-              (item, indexInChunk) => {
-                  const itemsOnThisPage = itemChunks.flat().length + indexInChunk + 1;
-                  // If we've already decided on a page size for this page, this logic is faulty.
-                  // Let's simplify: check the *next* chunk.
-                  return (item.description || '').length > LONG_TEXT_THRESHOLD;
-              }
+              (item) => (item.description || '').length > LONG_TEXT_THRESHOLD
           );
           
-          const itemsOnThisPageSoFar = itemChunks.slice(0, pageIndex).reduce((acc, c) => acc + c.length, 0);
-
           if (hasLongText) {
              if(pageIndex === 0) {
                  pageSize = 6;
              } else {
                  pageSize = 8;
              }
+          } else {
+            pageSize = pageIndex === 0 ? resolvedSettings.itemsPerPage : resolvedSettings.itemsPerPage + 5; // Adjust for subsequent pages
           }
+
 
           const chunk = items.slice(currentIndex, currentIndex + pageSize);
           itemChunks.push(chunk);

@@ -75,6 +75,7 @@ export async function exportToWord(element: HTMLElement, fileName: string) {
                     .join('\n');
             } catch (e) {
                 // Ignore stylesheets that can't be accessed (e.g., cross-origin)
+                console.warn("Could not read stylesheet for export:", e);
                 return '';
             }
         })

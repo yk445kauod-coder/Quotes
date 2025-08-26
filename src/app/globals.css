@@ -110,10 +110,14 @@
         page-break-after: always;
     }
     .cell-center {
-        @apply align-middle text-center;
+        text-align: center !important;
+        vertical-align: middle !important;
     }
     .cell-top-right {
-        @apply align-top text-right whitespace-pre-wrap;
+        text-align: right !important;
+        vertical-align: top !important;
+        white-space: pre-wrap;
+        word-wrap: break-word;
     }
 }
 
