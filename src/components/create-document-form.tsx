@@ -184,11 +184,18 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
   const handleExport = async (format: 'pdf' | 'word' | 'excel') => {
       setIsExporting(true);
       const docId = currentDocumentData.docId || 'document';
+      const previewElement = document.getElementById('document-preview-container');
+      if (!previewElement) {
+        toast({ variant: "destructive", title: "خطأ", description: "عنصر المعاينة غير موجود." });
+        setIsExporting(false);
+        return;
+      }
+
       try {
           if (format === 'pdf') {
-              await exportToPdf(docId);
+              await exportToPdf(previewElement, docId);
           } else if (format === 'word') {
-              await exportToWord(docId);
+              await exportToWord(previewElement, docId);
           } else if (format === 'excel') {
               exportToExcel(watchedItems, docId);
           }

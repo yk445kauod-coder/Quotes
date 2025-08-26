@@ -68,18 +68,45 @@
   }
 }
 
-/* Custom styles for document preview */
+/* Custom styles for A4 preview pages */
 @layer components {
-  .document-preview-table {
-    @apply w-full border-collapse text-right;
-  }
-  .document-preview-table th,
-  .document-preview-table td {
-    @apply border border-gray-400 p-2;
-  }
-  .document-preview-table th {
-    @apply bg-gray-200 font-bold;
-  }
+    .a4-page {
+        @apply bg-white text-black font-body text-sm shadow-lg mx-auto mb-4;
+        width: 210mm;
+        min-height: 296.5mm; /* Slightly less than 297mm to avoid issues */
+        padding: 15mm 15mm 20mm 15mm;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+    .a4-page > main {
+        flex-grow: 1;
+    }
+    .a4-page table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .a4-page th,
+    .a4-page td {
+        border: 1px solid #ccc;
+        padding: 5px;
+        text-align: right;
+    }
+    .a4-page th {
+        background-color: #f2f2f2;
+        font-weight: bold;
+    }
+    .a4-page .whitespace-pre-wrap {
+        white-space: pre-wrap;
+    }
+    .a4-page > footer {
+        @apply w-full mt-auto p-2 border-t-2 border-black text-center text-xs;
+        flex-shrink: 0; /* Prevent footer from shrinking */
+    }
+    /* This class ensures the element breaks to a new page when printing */
+    .page-break {
+        page-break-after: always;
+    }
 }
 
 
@@ -87,60 +114,48 @@
 @media print {
     @page {
         size: A4 portrait;
-        margin: 15mm;
+        margin: 0; /* Margins are now controlled by the .a4-page padding */
     }
 
     html, body {
         width: 210mm;
-        height: 297mm;
-        font-size: 10pt;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
         color-adjust: exact;
+        background: #fff;
     }
     
     .no-print {
         display: none !important;
     }
     
-    .export-footer {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        width: 100%;
-        text-align: center;
-        font-size: 9pt;
-        padding: 5mm 15mm; /* Add padding to match page margins */
-        box-sizing: border-box; /* Ensure padding is included in width */
-        border-top: 2px solid black;
-    }
-
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        page-break-inside: auto;
+    #document-preview-container {
+        padding: 0 !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+        background-color: transparent !important;
+        overflow: visible !important;
+        max-height: none !important;
     }
     
+    .a4-page {
+        margin: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+        page-break-after: always; /* Ensure each styled page becomes a real page */
+    }
+
+    .a4-page:last-child {
+        page-break-after: avoid;
+    }
+
+    /* Ensure table headers are repeated on each page */
     thead {
-        display: table-header-group; /* Crucial for repeating headers */
-    }
-
-    tbody {
-        display: table-row-group;
-    }
-
-    tr {
-        page-break-inside: avoid;
-        page-break-after: auto;
+        display: table-header-group; 
     }
     
-    td, th {
-      page-break-inside: avoid;
-    }
-
-    .summary-section {
-        page-break-before: auto;
-        page-break-inside: avoid;
+    tr {
+       page-break-inside: avoid;
     }
 }
