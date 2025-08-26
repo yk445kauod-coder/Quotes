@@ -32,7 +32,7 @@ const formSchema = z.object({
   itemsPerPage: z.coerce
     .number()
     .min(1, "يجب أن يكون العدد 1 على الأقل.")
-    .max(16, "يجب أن يكون العدد 16 على الأكثر.")
+    .max(20, "يجب أن يكون العدد 20 على الأكثر.")
     .optional(),
 });
 
@@ -142,10 +142,10 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
                   <FormItem>
                     <FormLabel>عدد البنود في كل صفحة</FormLabel>
                     <FormControl>
-                      <Input type="number" min="1" max="16" {...field} />
+                      <Input type="number" min="1" max="20" {...field} />
                     </FormControl>
                      <FormDescription>
-                      الحد الأقصى لعدد البنود التي تظهر في كل صفحة من المستند (بين 1 و 16).
+                      الحد الأقصى لعدد البنود التي تظهر في كل صفحة من المستند (بين 1 و 20).
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
