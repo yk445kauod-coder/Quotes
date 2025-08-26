@@ -1,3 +1,4 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -37,15 +38,18 @@ import {
   Save,
   FileDown,
   Loader2,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { saveDocument, updateDocument } from "@/lib/firebase-client";
 import { formatCurrency } from "@/lib/utils";
 import type { DocumentData, SettingsData } from "@/lib/types";
 import { useRouter } from "next/navigation";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { exportToPdf, exportToWord, exportToExcel } from "@/lib/export";
 import { Textarea } from "./ui/textarea";
 import { useLoading } from "@/context/loading-context";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
 
 const formSchema = z.object({
@@ -72,7 +76,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 interface CreateDocumentFormProps {
     existingDocument?: DocumentData;
-    defaultSettings?: SettingsData;
+    defaultSettings: SettingsData;
 }
 
 export function CreateDocumentForm({ existingDocument, defaultSettings }: CreateDocumentFormProps) {
@@ -82,6 +86,21 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
   const [isSaving, setIsSaving] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const isEditMode = !!existingDocument;
+
+  // State for column visibility
+  const [columnVisibility, setColumnVisibility] = useState({
+    showIndexColumn: true,
+    showUnitColumn: true,
+    showQuantityColumn: true,
+    showPriceColumn: true,
+    showTotalColumn: true,
+  });
+
+  type ColumnKey = keyof typeof columnVisibility;
+
+  const toggleColumn = (col: ColumnKey) => {
+    setColumnVisibility(prev => ({ ...prev, [col]: !prev[col] }));
+  };
 
 
   const form = useForm<FormValues>({
@@ -203,6 +222,29 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
       }
   };
   
+    const ColumnToggleButton = ({ col, label }: { col: ColumnKey, label: string }) => {
+        const isVisible = columnVisibility[col];
+        return (
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button
+                            type="button"
+                            variant={isVisible ? "outline" : "secondary"}
+                            size="icon"
+                            onClick={() => toggleColumn(col)}
+                            className="h-8 w-8"
+                        >
+                            {isVisible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>{isVisible ? `إخفاء عمود ${label}` : `إظهار عمود ${label}`}</p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+        );
+    };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
@@ -270,24 +312,35 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
               />
 
               <div>
-                <FormLabel>البنود</FormLabel>
+                <div className="flex justify-between items-center mb-2">
+                    <FormLabel>البنود</FormLabel>
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground">إظهار/إخفاء:</span>
+                        <ColumnToggleButton col="showIndexColumn" label="الرقم" />
+                        <ColumnToggleButton col="showUnitColumn" label="الوحدة" />
+                        <ColumnToggleButton col="showQuantityColumn" label="الكمية" />
+                        <ColumnToggleButton col="showPriceColumn" label="السعر" />
+                        <ColumnToggleButton col="showTotalColumn" label="الإجمالي" />
+                    </div>
+                </div>
+
                 <div className="mt-2 space-y-4">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="w-[40px] p-2 text-right">م</TableHead>
+                        {columnVisibility.showIndexColumn && <TableHead className="w-[40px] p-2 text-right">م</TableHead>}
                         <TableHead className="w-2/5 p-2 text-right">البيان</TableHead>
-                        <TableHead className="p-2 text-right">الوحدة</TableHead>
-                        <TableHead className="p-2 text-right">الكمية</TableHead>
-                        <TableHead className="p-2 text-right">السعر</TableHead>
-                        <TableHead className="p-2 text-right">الإجمالي</TableHead>
+                        {columnVisibility.showUnitColumn && <TableHead className="p-2 text-right">الوحدة</TableHead>}
+                        {columnVisibility.showQuantityColumn && <TableHead className="p-2 text-right">الكمية</TableHead>}
+                        {columnVisibility.showPriceColumn && <TableHead className="p-2 text-right">السعر</TableHead>}
+                        {columnVisibility.showTotalColumn && <TableHead className="p-2 text-right">الإجمالي</TableHead>}
                         <TableHead className="w-[40px] p-2 text-center">أدوات</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {fields.map((field, index) => (
                         <TableRow key={field.id}>
-                          <TableCell className="p-1 align-middle">{index + 1}</TableCell>
+                          {columnVisibility.showIndexColumn && <TableCell className="p-1 align-middle">{index + 1}</TableCell>}
                           <TableCell className="p-1 align-middle relative group">
                             <FormField
                               control={form.control}
@@ -299,7 +352,7 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
                               )}
                             />
                           </TableCell>
-                           <TableCell className="p-1 align-middle">
+                           {columnVisibility.showUnitColumn && <TableCell className="p-1 align-middle">
                             <FormField
                               control={form.control}
                               name={`items.${index}.unit`}
@@ -307,8 +360,8 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
                                 <Input {...field} placeholder="الوحدة" className="min-w-[80px]" />
                               )}
                             />
-                          </TableCell>
-                          <TableCell className="p-1 align-middle">
+                          </TableCell>}
+                          {columnVisibility.showQuantityColumn && <TableCell className="p-1 align-middle">
                             <FormField
                               control={form.control}
                               name={`items.${index}.quantity`}
@@ -316,8 +369,8 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
                                 <Input type="number" {...field} placeholder="الكمية" className="min-w-[80px]" />
                               )}
                             />
-                          </TableCell>
-                          <TableCell className="p-1 align-middle">
+                          </TableCell>}
+                          {columnVisibility.showPriceColumn && <TableCell className="p-1 align-middle">
                             <FormField
                               control={form.control}
                               name={`items.${index}.price`}
@@ -325,12 +378,12 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
                                 <Input type="number" {...field} placeholder="السعر" className="min-w-[100px]" />
                               )}
                             />
-                          </TableCell>
-                          <TableCell className="p-1 align-middle">
+                          </TableCell>}
+                          {columnVisibility.showTotalColumn && <TableCell className="p-1 align-middle">
                             {formatCurrency(
                               (watchedItems[index]?.quantity || 0) * (watchedItems[index]?.price || 0)
                             )}
-                          </TableCell>
+                          </TableCell>}
                           <TableCell className="p-1 align-middle text-center">
                             <Button
                             type="button"
@@ -432,6 +485,7 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
                       <DocumentPreview 
                           formData={currentDocumentData} 
                           settings={defaultSettings}
+                          columnVisibility={columnVisibility}
                       />
                   </div>
               </div>
@@ -442,5 +496,3 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
     </div>
   );
 }
-
-    

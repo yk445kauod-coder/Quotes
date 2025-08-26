@@ -73,7 +73,7 @@ export default function EditPage() {
     );
   }
 
-  if (!document) {
+  if (!document || !settings) {
     // This case will be handled by notFound() but as a fallback
     return null;
   }
@@ -85,7 +85,7 @@ export default function EditPage() {
       </h1>
       <CreateDocumentForm 
         existingDocument={document} 
-        defaultSettings={settings as SettingsData}
+        defaultSettings={settings}
       />
     </div>
   );

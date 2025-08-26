@@ -11,11 +11,26 @@ import { Skeleton } from "./ui/skeleton";
 interface DocumentPreviewProps {
   formData: Partial<DocumentData>;
   settings?: SettingsData | null;
+  columnVisibility?: {
+    showIndexColumn: boolean;
+    showUnitColumn: boolean;
+    showQuantityColumn: boolean;
+    showPriceColumn: boolean;
+    showTotalColumn: boolean;
+  };
 }
 
-export function DocumentPreview({ formData, settings: propSettings }: DocumentPreviewProps) {
+export function DocumentPreview({ formData, settings: propSettings, columnVisibility: propColumnVisibility }: DocumentPreviewProps) {
   const [settings, setSettings] = useState<SettingsData | null | undefined>(propSettings);
   const [loading, setLoading] = useState(true);
+
+  const columnVisibility = propColumnVisibility || {
+      showIndexColumn: true,
+      showUnitColumn: true,
+      showQuantityColumn: true,
+      showPriceColumn: true,
+      showTotalColumn: true,
+  };
 
   useEffect(() => {
     async function loadSettings() {
@@ -68,11 +83,6 @@ export function DocumentPreview({ formData, settings: propSettings }: DocumentPr
     headerImageUrl: settings?.headerImageUrl || "https://ik.imagekit.io/fpbwa3np7/%D8%A8%D8%B1%D9%86%D8%A7%D9%85%D8%AC%20%D8%B9%D8%B1%D9%88%D8%B6%20%D8%A7%D9%84%D8%A7%D8%B3%D8%B9%D8%A7%D8%B1/header%20-%20Copy.png?updatedAt=1755348570527",
     footerText: settings?.footerText || "Footer text not set",
     itemsPerPage: settings?.itemsPerPage || 17,
-    showIndexColumn: settings?.showIndexColumn !== false,
-    showUnitColumn: settings?.showUnitColumn !== false,
-    showQuantityColumn: settings?.showQuantityColumn !== false,
-    showPriceColumn: settings?.showPriceColumn !== false,
-    showTotalColumn: settings?.showTotalColumn !== false,
   }
 
   const docTypeName = docType === 'quote' ? 'عرض سعر' : 'مقايسة';
@@ -121,23 +131,23 @@ export function DocumentPreview({ formData, settings: propSettings }: DocumentPr
       <table className="w-full border-collapse text-right mt-4">
           <thead>
               <tr className="bg-gray-100">
-                  {resolvedSettings.showIndexColumn && <th className="border p-1 w-[5%] cell-center">م</th>}
+                  {columnVisibility.showIndexColumn && <th className="border p-1 w-[5%] cell-center">م</th>}
                   <th className="border p-1 w-[45%] cell-center">{docType === 'quote' ? 'البيان' : 'البند'}</th>
-                  {resolvedSettings.showUnitColumn && <th className="border p-1 w-[10%] cell-center">الوحدة</th>}
-                  {resolvedSettings.showQuantityColumn && <th className="border p-1 w-[10%] cell-center">{docType === 'quote' ? 'العدد' : 'الكمية'}</th>}
-                  {resolvedSettings.showPriceColumn && <th className="border p-1 w-[15%] cell-center">السعر</th>}
-                  {resolvedSettings.showTotalColumn && <th className="border p-1 w-[15%] cell-center">الإجمالي</th>}
+                  {columnVisibility.showUnitColumn && <th className="border p-1 w-[10%] cell-center">الوحدة</th>}
+                  {columnVisibility.showQuantityColumn && <th className="border p-1 w-[10%] cell-center">{docType === 'quote' ? 'العدد' : 'الكمية'}</th>}
+                  {columnVisibility.showPriceColumn && <th className="border p-1 w-[15%] cell-center">السعر</th>}
+                  {columnVisibility.showTotalColumn && <th className="border p-1 w-[15%] cell-center">الإجمالي</th>}
               </tr>
           </thead>
           <tbody>
               {chunk.map((item, index) => (
                   <tr key={startIndex + index}>
-                      {resolvedSettings.showIndexColumn && <td className="border p-1 cell-center">{formatNumberToHindi(startIndex + index + 1)}</td>}
+                      {columnVisibility.showIndexColumn && <td className="border p-1 cell-center">{formatNumberToHindi(startIndex + index + 1)}</td>}
                       <td className="border p-1 cell-top-right">{formatTextWithHindiNumerals(item.description || '')}</td>
-                      {resolvedSettings.showUnitColumn && <td className="border p-1 cell-center">{item.unit}</td>}
-                      {resolvedSettings.showQuantityColumn && <td className="border p-1 cell-center">{formatNumberToHindi(item.quantity || 0)}</td>}
-                      {resolvedSettings.showPriceColumn && <td className="border p-1 cell-center">{formatCurrency(item.price || 0)}</td>}
-                      {resolvedSettings.showTotalColumn && <td className="border p-1 cell-center">{formatCurrency((item.quantity || 0) * (item.price || 0))}</td>}
+                      {columnVisibility.showUnitColumn && <td className="border p-1 cell-center">{item.unit}</td>}
+                      {columnVisibility.showQuantityColumn && <td className="border p-1 cell-center">{formatNumberToHindi(item.quantity || 0)}</td>}
+                      {columnVisibility.showPriceColumn && <td className="border p-1 cell-center">{formatCurrency(item.price || 0)}</td>}
+                      {columnVisibility.showTotalColumn && <td className="border p-1 cell-center">{formatCurrency((item.quantity || 0) * (item.price || 0))}</td>}
                   </tr>
               ))}
           </tbody>
