@@ -22,7 +22,6 @@ export function formatCurrency(amount: number, currency = "EGP") {
  */
 export function formatNumberToHindi(num: number): string {
     if (typeof num !== 'number') return '';
-    // Added useGrouping: false to prevent separators like ١٬٢٣٤
     return new Intl.NumberFormat('ar-EG-u-nu-arab', { useGrouping: false }).format(num);
 }
 
@@ -43,13 +42,13 @@ export function formatTextWithHindiNumerals(text: string): string {
   // First, convert all western numerals to hindi numerals
   let processedText = text.replace(/[0-9]/g, (match) => westernArabicToHindiMap[match]);
 
-  // Then, ensure there is a space between numbers and adjacent non-space characters.
-  // Handles cases like "text123text", "text123", "123text"
-  // It looks for a boundary between a number and a non-number character that isn't a space.
+  // Then, add a space between any sequence of digits and any adjacent non-digit/non-space character.
+  // This is a more robust way to handle the spacing issue.
   const hindiNumerals = '٠١٢٣٤٥٦٧٨٩';
-  const regex = new RegExp(`([${hindiNumerals}])([^${hindiNumerals}\\s])|([^${hindiNumerals}\\s])([${hindiNumerals}])`, 'g');
-  
-  processedText = processedText.replace(regex, '$1$3 $2$4');
+  // Add space after a number sequence if it's followed by a non-digit, non-space character
+  processedText = processedText.replace(new RegExp(`([${hindiNumerals}]+)([^${hindiNumerals}\\s])`, 'g'), '$1 $2');
+  // Add space before a number sequence if it's preceded by a non-digit, non-space character
+  processedText = processedText.replace(new RegExp(`([^${hindiNumerals}\\s])([${hindiNumerals}]+)`, 'g'), '$1 $2');
 
   return processedText;
 }

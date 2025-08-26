@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -116,8 +117,7 @@
     .cell-top-right {
         text-align: right !important;
         vertical-align: top !important;
-        white-space: pre-wrap;
-        word-wrap: break-word;
+        /* Removing pre-wrap from this utility to apply it more selectively */
     }
 }
 

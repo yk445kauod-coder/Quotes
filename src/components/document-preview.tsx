@@ -146,7 +146,7 @@ export function DocumentPreview({ formData, settings: propSettings, columnVisibi
               {chunk.map((item, index) => (
                   <tr key={startIndex + index}>
                       {columnVisibility.showIndexColumn && <td className="border p-1 cell-center">{formatNumberToHindi(startIndex + index + 1)}</td>}
-                      <td className="border p-1 cell-top-right">{formatTextWithHindiNumerals(item.description || '')}</td>
+                      <td className="border p-1 cell-top-right whitespace-pre-wrap">{formatTextWithHindiNumerals(item.description || '')}</td>
                       {columnVisibility.showUnitColumn && <td className="border p-1 cell-center">{item.unit}</td>}
                       {columnVisibility.showQuantityColumn && <td className="border p-1 cell-center">{formatNumberToHindi(item.quantity || 0)}</td>}
                       {columnVisibility.showPriceColumn && <td className="border p-1 cell-center">{formatCurrency(item.price || 0)}</td>}
@@ -224,7 +224,7 @@ export function DocumentPreview({ formData, settings: propSettings, columnVisibi
                           <span>التاريخ: {today}</span>
                           <span>{docTypeName} رقم: {docIdText}</span>
                       </div>
-                      <div className="mb-2 text-sm whitespace-pre-wrap">
+                      <div className="mb-2 text-sm">
                           <p><span className="font-bold">السادة/</span> {clientName}</p>
                           <p><span className="font-bold">الموضوع:</span> {subject}</p>
                       </div>
