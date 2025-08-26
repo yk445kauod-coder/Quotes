@@ -71,7 +71,7 @@ export function DocumentPreview({ formData, settings: propSettings }: DocumentPr
   }
 
   const docTypeName = docType === 'quote' ? 'عرض سعر' : 'مقايسة';
-  const today = new Date().toLocaleDateString('ar-EG-u-nu-latn', { year: 'numeric', month: '2-digit', day: '2-digit' });
+  const today = new Date().toLocaleDateString('ar-EG-u-nu-arab', { year: 'numeric', month: '2-digit', day: '2-digit' });
   const docIdText = docId ? docId : '[سيتم إنشاؤه عند الحفظ]';
 
   // Smart Paging Logic:
@@ -149,7 +149,7 @@ export function DocumentPreview({ formData, settings: propSettings }: DocumentPr
                   </>
               )}
           </div>
-          <div className="w-2/5 max-w-md">
+          <div className="w-2/5 max-w-sm">
               <table className="w-full border-collapse text-right">
                   <tbody>
                       <tr>

@@ -220,7 +220,7 @@ export function DocumentList({ initialDocuments }: DocumentListProps) {
                         {doc.docType === 'quote' ? 'عرض سعر' : 'مقايسة'}
                       </Badge>
                     </TableCell>
-                    <TableCell>{new Date(doc.createdAt).toLocaleDateString('ar-EG')}</TableCell>
+                    <TableCell>{new Date(doc.createdAt).toLocaleDateString('ar-EG', { numberingSystem: 'arab' })}</TableCell>
                     <TableCell className="text-left">{formatCurrency(doc.total)}</TableCell>
                     <TableCell>
                       <AlertDialog>

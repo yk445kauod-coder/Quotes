@@ -10,6 +10,7 @@ export function formatCurrency(amount: number, currency = "EGP") {
     style: "currency",
     currency,
     minimumFractionDigits: 2,
+    numberingSystem: "arab", // Ensure Arabic-Indic numerals are used
   }).format(amount);
 }
 
