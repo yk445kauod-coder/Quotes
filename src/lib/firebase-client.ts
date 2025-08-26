@@ -134,7 +134,6 @@ export async function getSettings(): Promise<SettingsData> {
                 headerImageUrl: "https://ik.imagekit.io/fpbwa3np7/%D8%A8%D8%B1%D9%86%D8%A7%D9%85%D8%AC%20%D8%B9%D8%B1%D9%88%D8%B6%20%D8%A7%D9%84%D8%A7%D8%B3%D8%B9%D8%A7%D8%B1/header%20-%20Copy.png?updatedAt=1755348570527",
                 footerText: "Company Name\nAddress\nPhone & Email",
                 defaultTerms: "الأسعار شاملة الضريبة\nصالحة لمدة 30 يوم\nالتسليم خلال 15 يوم عمل",
-                pinTermsAndPayment: false,
                 itemsPerPage: 13,
                 ...settings
             };
@@ -147,7 +146,6 @@ export async function getSettings(): Promise<SettingsData> {
         headerImageUrl: "https://ik.imagekit.io/fpbwa3np7/%D8%A8%D8%B1%D9%86%D8%A7%D9%85%D8%AC%20%D8%B9%D8%B1%D9%88%D8%B6%20%D8%A7%D9%84%D8%A7%D8%B3%D8%B9%D8%A7%D8%B1/header%20-%20Copy.png?updatedAt=1755348570527",
         footerText: "Company Name\nAddress\nPhone & Email",
         defaultTerms: "الأسعار شاملة الضريبة\nصالحة لمدة 30 يوم\nالتسليم خلال 15 يوم عمل",
-        pinTermsAndPayment: false,
         itemsPerPage: 13,
     };
 }

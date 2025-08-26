@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Save } from "lucide-react";
@@ -28,7 +27,6 @@ const formSchema = z.object({
   headerImageUrl: z.string().url("يجب أن يكون رابطًا صحيحًا."),
   footerText: z.string().min(1, "نص التذييل مطلوب."),
   defaultTerms: z.string().optional(),
-  pinTermsAndPayment: z.boolean().optional(),
   itemsPerPage: z.coerce
     .number()
     .min(1, "يجب أن يكون العدد 1 على الأقل.")
@@ -50,7 +48,6 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
         ...initialSettings,
-        pinTermsAndPayment: initialSettings.pinTermsAndPayment || false,
         itemsPerPage: initialSettings.itemsPerPage || 13,
     },
   });
@@ -58,9 +55,7 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
   async function onSubmit(values: FormValues) {
     setIsSaving(true);
     try {
-      // Ensure we don't save a payment method field that no longer exists in the schema
-      const { ...settingsToSave } = values;
-      await saveSettings(settingsToSave as SettingsData);
+      await saveSettings(values as SettingsData);
       toast({
         title: "تم الحفظ بنجاح",
         description: "تم تحديث إعدادات المستند.",
@@ -151,30 +146,6 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
                   </FormItem>
                 )}
               />
-
-               <FormField
-                control={form.control}
-                name="pinTermsAndPayment"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                        <FormLabel className="text-base">
-                            تثبيت الشروط
-                        </FormLabel>
-                        <FormDescription>
-                            عند تفعيل هذا الخيار، سيكون حقل الشروط للقراءة فقط في نموذج الإنشاء.
-                        </FormDescription>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
 
               <div className="flex justify-end">
                 <Button type="submit" disabled={isSaving}>

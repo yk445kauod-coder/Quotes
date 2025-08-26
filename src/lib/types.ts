@@ -27,6 +27,5 @@ export interface SettingsData {
   headerImageUrl: string;
   footerText: string;
   defaultTerms?: string;
-  pinTermsAndPayment?: boolean;
   itemsPerPage?: number;
 }

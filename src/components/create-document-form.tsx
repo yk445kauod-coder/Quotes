@@ -390,8 +390,6 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
                                         {...field} 
                                         rows={4} 
                                         placeholder="اكتب الشروط هنا..." 
-                                        readOnly={defaultSettings?.pinTermsAndPayment}
-                                        className={defaultSettings?.pinTermsAndPayment ? "bg-muted cursor-not-allowed" : ""}
                                     />
                                 </FormControl>
                             )}
