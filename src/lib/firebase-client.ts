@@ -1,3 +1,4 @@
+
 // This file contains client-side Firebase operations
 import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
 import { getDatabase, ref, push, remove, set, onValue, query, update, get, Database } from "firebase/database";
@@ -130,7 +131,7 @@ export async function getSettings(): Promise<SettingsData> {
                 headerImageUrl: "https://ik.imagekit.io/fpbwa3np7/%D8%A8%D8%B1%D9%86%D8%A7%D9%85%D8%AC%20%D8%B9%D8%B1%D9%88%D8%B6%20%D8%A7%D9%84%D8%A7%D8%B3%D8%B9%D8%A7%D8%B1/header%20-%20Copy.png?updatedAt=1755348570527",
                 footerText: "Company Name\nAddress\nPhone & Email",
                 defaultTerms: "الأسعار شاملة الضريبة\nصالحة لمدة 30 يوم\nالتسليم خلال 15 يوم عمل",
-                defaultPaymentMethod: "سيتم تحديدها لاحقاً.",
+                defaultPaymentMethod: "نقدا او بأمر دفع على حساب 3913070223277800019 البنك الاهلي فرع كفر الدوار\nاو حساب رقم 5590001000000924 بنك مصر فرع المنتزه",
                 pinTermsAndPayment: false,
                 itemsPerPage: 13,
                 ...settings
@@ -144,7 +145,7 @@ export async function getSettings(): Promise<SettingsData> {
         headerImageUrl: "https://ik.imagekit.io/fpbwa3np7/%D8%A8%D8%B1%D9%86%D8%A7%D9%85%D8%AC%20%D8%B9%D8%B1%D9%88%D8%B6%20%D8%A7%D9%84%D8%A7%D8%B3%D8%B9%D8%A7%D8%B1/header%20-%20Copy.png?updatedAt=1755348570527",
         footerText: "Company Name\nAddress\nPhone & Email",
         defaultTerms: "الأسعار شاملة الضريبة\nصالحة لمدة 30 يوم\nالتسليم خلال 15 يوم عمل",
-        defaultPaymentMethod: "سيتم تحديدها لاحقاً.",
+        defaultPaymentMethod: "نقدا او بأمر دفع على حساب 3913070223277800019 البنك الاهلي فرع كفر الدوار\nاو حساب رقم 5590001000000924 بنك مصر فرع المنتزه",
         pinTermsAndPayment: false,
         itemsPerPage: 13,
     };
