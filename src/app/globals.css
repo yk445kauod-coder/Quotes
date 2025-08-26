@@ -74,8 +74,8 @@
     .a4-page {
         @apply bg-white text-black font-body text-sm shadow-lg mx-auto mb-4;
         width: 210mm;
-        min-height: 296.5mm; /* Slightly less than 297mm to avoid issues */
-        padding: 10mm 15mm 15mm 15mm; /* Reduced top/bottom padding */
+        min-height: calc(297mm - 1px); /* A4 height minus 1px as requested */
+        padding: 10mm 15mm 15mm 15mm; 
         display: flex;
         flex-direction: column;
         position: relative;
@@ -117,7 +117,6 @@
     .cell-top-right {
         text-align: right !important;
         vertical-align: top !important;
-        /* Removing pre-wrap from this utility to apply it more selectively */
     }
 }
 

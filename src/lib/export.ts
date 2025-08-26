@@ -17,14 +17,15 @@ function convertToCSV(items: DocumentItem[]): string {
 }
 
 /**
- * Exports a given HTML element to a PDF file.
+ * Exports a given HTML element to a PDF file using html2pdf.js.
  * @param element The HTML element to export.
- * @param fileName The desired name of the output file.
+ * @param fileName The desired name of the output file without extension.
  */
 export async function exportToPdf(element: HTMLElement, fileName: string) {
     if (!element) {
         throw new Error("Element to export not found.");
     }
+    // Dynamically import html2pdf.js
     const html2pdf = (await import('html2pdf.js')).default;
 
     // The options are critical for getting the output right.
@@ -33,17 +34,21 @@ export async function exportToPdf(element: HTMLElement, fileName: string) {
         filename: `${fileName}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { 
-            scale: 2, // Higher scale for better quality
+            scale: 3, // Higher scale for better quality text and images
             useCORS: true, 
             logging: false,
-            // These are important to ensure the full content is captured
+            // These are important to ensure the full content is captured correctly
             scrollX: 0,
             scrollY: -window.scrollY,
             windowWidth: document.documentElement.offsetWidth,
             windowHeight: document.documentElement.offsetHeight,
         },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        // Let our CSS control the page breaks
+        jsPDF: { 
+            unit: 'mm', 
+            format: 'a4', 
+            orientation: 'portrait' 
+        },
+        // Let our CSS control the page breaks. The 'legacy' mode helps with complex layouts.
         pagebreak: { mode: ['css', 'legacy'] } 
     };
     
