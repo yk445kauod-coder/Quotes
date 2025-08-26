@@ -123,34 +123,24 @@
 
 /* Styles for PDF/Print Export */
 @media print {
-    @page {
-        size: A4 portrait;
-        margin: 0;
-    }
-
-    html, body {
-        width: 100%;
-        height: auto;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-        color-adjust: exact;
-        background: #fff;
-        margin: 0;
-        padding: 0;
-    }
-    
+    /* Rule 1: Hide everything that's marked as non-printable */
     .no-print {
         display: none !important;
     }
 
-    body > #main-container {
-        display: block;
+    /* Rule 2: Ensure the body and the main container are visible but take no space */
+    body, #main-container {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff;
     }
 
+    /* Rule 3: The printable area should be the only thing visible */
     #printable-area {
       display: block;
     }
-    
+
+    /* Rule 4: Style the A4 page for printing */
     .a4-page {
         margin: 0 !important;
         box-shadow: none !important;
@@ -159,6 +149,7 @@
         color: #000;
         height: auto;
         min-height: 1px; /* Reset min-height for printing */
+        width: 100%;
     }
     
     .a4-page th,
@@ -174,7 +165,7 @@
         page-break-after: avoid;
     }
 
-    /* Ensure table headers are repeated on each page */
+    /* Rule 5: Ensure table headers are repeated on each page */
     thead {
         display: table-header-group; 
     }
@@ -182,4 +173,11 @@
     tr {
        page-break-inside: avoid;
     }
+
+    @page {
+      size: A4;
+      margin: 0;
+    }
 }
+
+    

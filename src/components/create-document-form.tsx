@@ -308,254 +308,256 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start" id="form-and-preview">
-      <Card className="no-print">
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>تفاصيل المستند</CardTitle>
-            {isEditMode && (
-                <div className="flex items-center space-x-2">
-                    <Switch
-                        id="auto-save"
-                        checked={isAutoSaving}
-                        onCheckedChange={setIsAutoSaving}
-                    />
-                    <Label htmlFor="auto-save" className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <Clock className="h-4 w-4" />
-                        حفظ تلقائي
-                    </Label>
+      <div className="no-print">
+        <Card>
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle>تفاصيل المستند</CardTitle>
+              {isEditMode && (
+                  <div className="flex items-center space-x-2">
+                      <Switch
+                          id="auto-save"
+                          checked={isAutoSaving}
+                          onCheckedChange={setIsAutoSaving}
+                      />
+                      <Label htmlFor="auto-save" className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <Clock className="h-4 w-4" />
+                          حفظ تلقائي
+                      </Label>
+                  </div>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="docType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>نوع المستند</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          dir="rtl"
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="اختر نوع المستند" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="quote">عرض سعر</SelectItem>
+                            <SelectItem value="estimation">مقايسة</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
-            )}
-           </div>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
                 <FormField
                   control={form.control}
-                  name="docType"
+                  name="clientName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>نوع المستند</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        dir="rtl"
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="اختر نوع المستند" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="quote">عرض سعر</SelectItem>
-                          <SelectItem value="estimation">مقايسة</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <FormLabel>السادة/</FormLabel>
+                      <FormControl>
+                        <Textarea placeholder="اسم العميل أو الجهة" {...field} rows={2}/>
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-              </div>
 
-              <FormField
-                control={form.control}
-                name="clientName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>السادة/</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="اسم العميل أو الجهة" {...field} rows={2}/>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="subject"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>الموضوع</FormLabel>
+                      <FormControl>
+                        <Input placeholder="موضوع المستند" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="subject"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>الموضوع</FormLabel>
-                    <FormControl>
-                      <Input placeholder="موضوع المستند" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                      <FormLabel>البنود</FormLabel>
+                      <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted-foreground">إظهار/إخفاء:</span>
+                          <ColumnToggleButton col="showIndexColumn" label="الرقم" />
+                          <ColumnToggleButton col="showUnitColumn" label="الوحدة" />
+                          <ColumnToggleButton col="showQuantityColumn" label="الكمية" />
+                          <ColumnToggleButton col="showPriceColumn" label="السعر" />
+                          <ColumnToggleButton col="showTotalColumn" label="الإجمالي" />
+                      </div>
+                  </div>
 
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                    <FormLabel>البنود</FormLabel>
-                    <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">إظهار/إخفاء:</span>
-                        <ColumnToggleButton col="showIndexColumn" label="الرقم" />
-                        <ColumnToggleButton col="showUnitColumn" label="الوحدة" />
-                        <ColumnToggleButton col="showQuantityColumn" label="الكمية" />
-                        <ColumnToggleButton col="showPriceColumn" label="السعر" />
-                        <ColumnToggleButton col="showTotalColumn" label="الإجمالي" />
-                    </div>
-                </div>
-
-                <div className="mt-2 space-y-4">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        {columnVisibility.showIndexColumn && <TableHead className="w-[40px] p-2 text-right">م</TableHead>}
-                        <TableHead className="w-2/5 p-2 text-right">البيان</TableHead>
-                        {columnVisibility.showUnitColumn && <TableHead className="p-2 text-right">الوحدة</TableHead>}
-                        {columnVisibility.showQuantityColumn && <TableHead className="p-2 text-right">الكمية</TableHead>}
-                        {columnVisibility.showPriceColumn && <TableHead className="p-2 text-right">السعر</TableHead>}
-                        {columnVisibility.showTotalColumn && <TableHead className="p-2 text-right">الإجمالي</TableHead>}
-                        <TableHead className="w-[40px] p-2 text-center">أدوات</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {fields.map((field, index) => (
-                        <TableRow key={field.id}>
-                          {columnVisibility.showIndexColumn && <TableCell className="p-1 align-middle">{index + 1}</TableCell>}
-                          <TableCell className="p-1 align-middle relative group">
-                            <FormField
-                              control={form.control}
-                              name={`items.${index}.description`}
-                              render={({ field }) => (
-                                <FormControl>
-                                  <Textarea
-                                    {...field}
-                                    placeholder="وصف البند"
-                                    rows={2}
-                                    onChange={(e) => {
-                                      // Remove parentheses from the input value
-                                      const sanitizedValue = e.target.value.replace(/[()]/g, '');
-                                      field.onChange(sanitizedValue);
-                                    }}
-                                  />
-                                </FormControl>
-                              )}
-                            />
-                          </TableCell>
-                           {columnVisibility.showUnitColumn && <TableCell className="p-1 align-middle">
-                            <FormField
-                              control={form.control}
-                              name={`items.${index}.unit`}
-                              render={({ field }) => (
-                                <Input {...field} placeholder="الوحدة" className="min-w-[80px]" />
-                              )}
-                            />
-                          </TableCell>}
-                          {columnVisibility.showQuantityColumn && <TableCell className="p-1 align-middle">
-                            <FormField
-                              control={form.control}
-                              name={`items.${index}.quantity`}
-                              render={({ field }) => (
-                                <Input type="number" {...field} placeholder="الكمية" className="min-w-[80px]" />
-                              )}
-                            />
-                          </TableCell>}
-                          {columnVisibility.showPriceColumn && <TableCell className="p-1 align-middle">
-                            <FormField
-                              control={form.control}
-                              name={`items.${index}.price`}
-                              render={({ field }) => (
-                                <Input type="number" {...field} placeholder="السعر" className="min-w-[100px]" />
-                              )}
-                            />
-                          </TableCell>}
-                          {columnVisibility.showTotalColumn && <TableCell className="p-1 align-middle">
-                            {formatCurrency(
-                              (watchedItems[index]?.quantity || 0) * (watchedItems[index]?.price || 0)
-                            )}
-                          </TableCell>}
-                          <TableCell className="p-1 align-middle text-center">
-                            <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => remove(index)}
-                            disabled={fields.length <= 1}
-                            title="حذف البند"
-                            >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </TableCell>
+                  <div className="mt-2 space-y-4">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          {columnVisibility.showIndexColumn && <TableHead className="w-[40px] p-2 text-right">م</TableHead>}
+                          <TableHead className="w-2/5 p-2 text-right">البيان</TableHead>
+                          {columnVisibility.showUnitColumn && <TableHead className="p-2 text-right">الوحدة</TableHead>}
+                          {columnVisibility.showQuantityColumn && <TableHead className="p-2 text-right">الكمية</TableHead>}
+                          {columnVisibility.showPriceColumn && <TableHead className="p-2 text-right">السعر</TableHead>}
+                          {columnVisibility.showTotalColumn && <TableHead className="p-2 text-right">الإجمالي</TableHead>}
+                          <TableHead className="w-[40px] p-2 text-center">أدوات</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                   <FormMessage>{form.formState.errors.items?.message}</FormMessage>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => append({ description: "", unit: "قطعة", quantity: 1, price: 0 })}
-                  >
-                    <PlusCircle className="ms-2 h-4 w-4" />
-                    إضافة بند جديد
+                      </TableHeader>
+                      <TableBody>
+                        {fields.map((field, index) => (
+                          <TableRow key={field.id}>
+                            {columnVisibility.showIndexColumn && <TableCell className="p-1 align-middle">{index + 1}</TableCell>}
+                            <TableCell className="p-1 align-middle relative group">
+                              <FormField
+                                control={form.control}
+                                name={`items.${index}.description`}
+                                render={({ field }) => (
+                                  <FormControl>
+                                    <Textarea
+                                      {...field}
+                                      placeholder="وصف البند"
+                                      rows={2}
+                                      onChange={(e) => {
+                                        // Remove parentheses from the input value
+                                        const sanitizedValue = e.target.value.replace(/[()]/g, '');
+                                        field.onChange(sanitizedValue);
+                                      }}
+                                    />
+                                  </FormControl>
+                                )}
+                              />
+                            </TableCell>
+                            {columnVisibility.showUnitColumn && <TableCell className="p-1 align-middle">
+                              <FormField
+                                control={form.control}
+                                name={`items.${index}.unit`}
+                                render={({ field }) => (
+                                  <Input {...field} placeholder="الوحدة" className="min-w-[80px]" />
+                                )}
+                              />
+                            </TableCell>}
+                            {columnVisibility.showQuantityColumn && <TableCell className="p-1 align-middle">
+                              <FormField
+                                control={form.control}
+                                name={`items.${index}.quantity`}
+                                render={({ field }) => (
+                                  <Input type="number" {...field} placeholder="الكمية" className="min-w-[80px]" />
+                                )}
+                              />
+                            </TableCell>}
+                            {columnVisibility.showPriceColumn && <TableCell className="p-1 align-middle">
+                              <FormField
+                                control={form.control}
+                                name={`items.${index}.price`}
+                                render={({ field }) => (
+                                  <Input type="number" {...field} placeholder="السعر" className="min-w-[100px]" />
+                                )}
+                              />
+                            </TableCell>}
+                            {columnVisibility.showTotalColumn && <TableCell className="p-1 align-middle">
+                              {formatCurrency(
+                                (watchedItems[index]?.quantity || 0) * (watchedItems[index]?.price || 0)
+                              )}
+                            </TableCell>}
+                            <TableCell className="p-1 align-middle text-center">
+                              <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => remove(index)}
+                              disabled={fields.length <= 1}
+                              title="حذف البند"
+                              >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                    <FormMessage>{form.formState.errors.items?.message}</FormMessage>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => append({ description: "", unit: "قطعة", quantity: 1, price: 0 })}
+                    >
+                      <PlusCircle className="ms-2 h-4 w-4" />
+                      إضافة بند جديد
+                    </Button>
+                  </div>
+                </div>
+                
+                {watchedAll.docType === 'quote' && (
+                  <>
+                      <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <FormLabel htmlFor="terms">الشروط</FormLabel>
+                          </div>
+                          <FormField
+                              control={form.control}
+                              name="terms"
+                              render={({ field }) => (
+                                  <FormControl>
+                                      <Textarea 
+                                          {...field} 
+                                          rows={4} 
+                                          placeholder="اكتب الشروط هنا..." 
+                                      />
+                                  </FormControl>
+                              )}
+                          />
+                      </div>
+
+                      <div className="space-y-2">
+                          <FormLabel htmlFor="paymentMethod">طريقة الدفع</FormLabel>
+                          <FormField
+                              control={form.control}
+                              name="paymentMethod"
+                              render={({ field }) => (
+                                  <FormControl>
+                                      <Textarea 
+                                          {...field} 
+                                          rows={3} 
+                                          placeholder="اكتب طريقة الدفع هنا..."
+                                      />
+                                  </FormControl>
+                              )}
+                          />
+                      </div>
+                  </>
+                )}
+
+
+                <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4">
+                  <Button type="button" variant="outline" onClick={exportToPdf} disabled={isExporting}>
+                    {isExporting ? <Loader2 className="ms-2 h-4 w-4 animate-spin" /> : <Printer className="ms-2 h-4 w-4" />}
+                    PDF
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => handleExport('word')} disabled={isExporting}>
+                    {isExporting ? <Loader2 className="ms-2 h-4 w-4 animate-spin" /> : <FileDown className="ms-2 h-4 w-4" />}
+                    Word
+                  </Button>
+                  <Button type="submit" disabled={isSaving}>
+                    {isSaving ? <Loader2 className="ms-2 h-4 w-4 animate-spin" /> : <Save className="ms-2 h-4 w-4" />}
+                    {isEditMode ? 'تحديث المستند' : 'حفظ المستند'}
                   </Button>
                 </div>
-              </div>
-              
-              {watchedAll.docType === 'quote' && (
-                <>
-                    <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <FormLabel htmlFor="terms">الشروط</FormLabel>
-                        </div>
-                        <FormField
-                            control={form.control}
-                            name="terms"
-                            render={({ field }) => (
-                                <FormControl>
-                                    <Textarea 
-                                        {...field} 
-                                        rows={4} 
-                                        placeholder="اكتب الشروط هنا..." 
-                                    />
-                                </FormControl>
-                            )}
-                        />
-                    </div>
-
-                    <div className="space-y-2">
-                        <FormLabel htmlFor="paymentMethod">طريقة الدفع</FormLabel>
-                         <FormField
-                            control={form.control}
-                            name="paymentMethod"
-                            render={({ field }) => (
-                                <FormControl>
-                                    <Textarea 
-                                        {...field} 
-                                        rows={3} 
-                                        placeholder="اكتب طريقة الدفع هنا..."
-                                    />
-                                </FormControl>
-                            )}
-                        />
-                    </div>
-                </>
-              )}
-
-
-              <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4">
-                 <Button type="button" variant="outline" onClick={exportToPdf} disabled={isExporting}>
-                   {isExporting ? <Loader2 className="ms-2 h-4 w-4 animate-spin" /> : <Printer className="ms-2 h-4 w-4" />}
-                   PDF
-                 </Button>
-                 <Button type="button" variant="outline" onClick={() => handleExport('word')} disabled={isExporting}>
-                   {isExporting ? <Loader2 className="ms-2 h-4 w-4 animate-spin" /> : <FileDown className="ms-2 h-4 w-4" />}
-                   Word
-                 </Button>
-                <Button type="submit" disabled={isSaving}>
-                  {isSaving ? <Loader2 className="ms-2 h-4 w-4 animate-spin" /> : <Save className="ms-2 h-4 w-4" />}
-                  {isEditMode ? 'تحديث المستند' : 'حفظ المستند'}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="sticky top-20">
         <Card>
@@ -578,3 +580,5 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
     </div>
   );
 }
+
+    
