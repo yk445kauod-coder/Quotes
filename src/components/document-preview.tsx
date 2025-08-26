@@ -5,36 +5,37 @@ import { formatCurrency } from "@/lib/utils";
 import Image from "next/image";
 import type { DocumentData, SettingsData, DocumentItem } from "@/lib/types";
 import React, { useState, useEffect } from "react";
-import { getSettings } from "@/lib/firebase-client";
+import { getSettings as getClientSettings } from "@/lib/firebase-client";
 import { Skeleton } from "./ui/skeleton";
 
 interface DocumentPreviewProps {
   formData: Partial<DocumentData>;
+  settings?: SettingsData | null;
 }
 
-const ITEMS_PER_PAGE = 13;
-
-export function DocumentPreview({ formData }: DocumentPreviewProps) {
-  const [settings, setSettings] = useState<SettingsData | null>(null);
+export function DocumentPreview({ formData, settings: propSettings }: DocumentPreviewProps) {
+  const [settings, setSettings] = useState<SettingsData | null | undefined>(propSettings);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadSettings() {
-      try {
-        const fetchedSettings = await getSettings();
-        setSettings(fetchedSettings);
-      } catch (error) {
-        console.error("Failed to load settings for preview:", error);
-        setSettings({
-            headerImageUrl: "https://placehold.co/700x100.png",
-            footerText: "Error loading settings"
-        });
-      } finally {
+      if (propSettings === undefined) {
+        try {
+          const fetchedSettings = await getClientSettings();
+          setSettings(fetchedSettings);
+        } catch (error) {
+          console.error("Failed to load settings for preview:", error);
+          setSettings(null); // Set to null on error to use defaults
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setSettings(propSettings);
         setLoading(false);
       }
     }
     loadSettings();
-  }, []);
+  }, [propSettings]);
 
   if (loading) {
       return (
@@ -62,7 +63,14 @@ export function DocumentPreview({ formData }: DocumentPreviewProps) {
     taxAmount = 0,
     total = 0,
   } = formData;
+  
+  const resolvedSettings = {
+    headerImageUrl: settings?.headerImageUrl || "https://ik.imagekit.io/fpbwa3np7/%D8%A8%D8%B1%D9%86%D8%A7%D9%85%D8%AC%20%D8%B9%D8%B1%D9%88%D8%B6%20%D8%A7%D9%84%D8%A7%D8%B3%D8%B9%D8%A7%D8%B1/header%20-%20Copy.png?updatedAt=1755348570527",
+    footerText: settings?.footerText || "Footer text not set",
+    itemsPerPage: settings?.itemsPerPage || 13,
+  }
 
+  const ITEMS_PER_PAGE = resolvedSettings.itemsPerPage;
   const docTypeName = docType === 'quote' ? 'عرض سعر' : 'مقايسة';
   const today = new Date().toLocaleDateString('ar-EG-u-nu-latn', { year: 'numeric', month: '2-digit', day: '2-digit' });
   const docIdText = docId ? docId : '[سيتم إنشاؤه عند الحفظ]';
@@ -145,9 +153,9 @@ export function DocumentPreview({ formData }: DocumentPreviewProps) {
       {itemChunks.map((chunk, pageIndex) => (
         <div key={pageIndex} className="a4-page">
           <header className="w-full">
-            {pageIndex === 0 && settings?.headerImageUrl && (
+            {pageIndex === 0 && resolvedSettings?.headerImageUrl && (
                 <Image
-                  src={settings.headerImageUrl}
+                  src={resolvedSettings.headerImageUrl}
                   alt="Company Header"
                   width={794}
                   height={120}
@@ -180,7 +188,7 @@ export function DocumentPreview({ formData }: DocumentPreviewProps) {
           </main>
 
           <footer className="w-full mt-auto p-2 border-t-2 border-black text-center text-xs">
-            {settings?.footerText && <p className="whitespace-pre-wrap">{settings.footerText}</p>}
+            {resolvedSettings?.footerText && <p className="whitespace-pre-wrap">{resolvedSettings.footerText}</p>}
              <div className="mt-1">
                 صفحة {pageIndex + 1} من {totalPages}
             </div>

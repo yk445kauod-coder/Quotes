@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -14,6 +15,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Save } from "lucide-react";
@@ -26,6 +28,12 @@ const formSchema = z.object({
   footerText: z.string().min(1, "نص التذييل مطلوب."),
   defaultTerms: z.string().optional(),
   defaultPaymentMethod: z.string().optional(),
+  pinTermsAndPayment: z.boolean().optional(),
+  itemsPerPage: z.coerce
+    .number()
+    .min(1, "يجب أن يكون العدد 1 على الأقل.")
+    .max(16, "يجب أن يكون العدد 16 على الأكثر.")
+    .optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -40,7 +48,11 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: initialSettings,
+    defaultValues: {
+        ...initialSettings,
+        pinTermsAndPayment: initialSettings.pinTermsAndPayment || false,
+        itemsPerPage: initialSettings.itemsPerPage || 13,
+    },
   });
 
   async function onSubmit(values: FormValues) {
@@ -67,7 +79,7 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
         <CardHeader>
           <CardTitle>إعدادات المستند</CardTitle>
           <CardDescription>
-            تغيير البيانات التي تظهر في رأس وتذييل كل المستندات، بالإضافة إلى القيم الافتراضية.
+            تغيير البيانات التي تظهر في رأس وتذييل كل المستندات، بالإضافة إلى القيم الافتراضية والتحكم في التنسيق.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -137,6 +149,48 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
                   </FormItem>
                 )}
               />
+
+               <FormField
+                control={form.control}
+                name="itemsPerPage"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>عدد البنود في كل صفحة</FormLabel>
+                    <FormControl>
+                      <Input type="number" min="1" max="16" {...field} />
+                    </FormControl>
+                     <FormDescription>
+                      الحد الأقصى لعدد البنود التي تظهر في كل صفحة من المستند (بين 1 و 16).
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+               <FormField
+                control={form.control}
+                name="pinTermsAndPayment"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                        <FormLabel className="text-base">
+                            تثبيت الشروط والدفع
+                        </FormLabel>
+                        <FormDescription>
+                            عند تفعيل هذا الخيار، ستكون حقول الشروط وطريقة الدفع للقراءة فقط في نموذج الإنشاء.
+                        </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+
               <div className="flex justify-end">
                 <Button type="submit" disabled={isSaving}>
                   {isSaving ? <Loader2 className="ms-2 h-4 w-4 animate-spin" /> : <Save className="ms-2 h-4 w-4" />}

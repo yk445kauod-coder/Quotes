@@ -184,15 +184,14 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
   const handleExport = async (format: 'pdf' | 'word' | 'excel') => {
       setIsExporting(true);
       const docId = currentDocumentData.docId || 'document';
-      const exportContainer = document.getElementById('document-preview-container');
-      if (!exportContainer) {
+      
+      // We always target the container with the pages now
+      const elementToExport = document.getElementById('document-preview-container');
+      if (!elementToExport) {
         toast({ variant: "destructive", title: "خطأ", description: "عنصر المعاينة غير موجود." });
         setIsExporting(false);
         return;
       }
-      
-      // We clone the node to modify it for export without affecting the view
-      const elementToExport = exportContainer.cloneNode(true) as HTMLElement;
 
       try {
           if (format === 'pdf') {
@@ -462,7 +461,13 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
                     <div className="space-y-2">
                         <div className="flex items-center justify-between">
                         <FormLabel htmlFor="terms">الشروط</FormLabel>
-                        <Button type="button" variant="outline" size="sm" onClick={handleSmartSuggestions} disabled={isSuggesting}>
+                        <Button 
+                            type="button" 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={handleSmartSuggestions} 
+                            disabled={isSuggesting || defaultSettings?.pinTermsAndPayment}
+                        >
                             {isSuggesting ? <Loader2 className="ms-2 h-4 w-4 animate-spin" /> : <Wand2 className="ms-2 h-4 w-4" />}
                             اقتراح ذكي
                         </Button>
@@ -472,7 +477,13 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
                             name="terms"
                             render={({ field }) => (
                                 <FormControl>
-                                    <Textarea {...field} rows={4} placeholder="اكتب الشروط هنا..." />
+                                    <Textarea 
+                                        {...field} 
+                                        rows={4} 
+                                        placeholder="اكتب الشروط هنا..." 
+                                        readOnly={defaultSettings?.pinTermsAndPayment}
+                                        className={defaultSettings?.pinTermsAndPayment ? "bg-muted cursor-not-allowed" : ""}
+                                    />
                                 </FormControl>
                             )}
                         />
@@ -485,7 +496,13 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
                             name="paymentMethod"
                             render={({ field }) => (
                                 <FormControl>
-                                     <Textarea {...field} rows={3} placeholder="اكتب طريقة الدفع هنا..." />
+                                     <Textarea 
+                                        {...field} 
+                                        rows={3} 
+                                        placeholder="اكتب طريقة الدفع هنا..." 
+                                        readOnly={defaultSettings?.pinTermsAndPayment}
+                                        className={defaultSettings?.pinTermsAndPayment ? "bg-muted cursor-not-allowed" : ""}
+                                     />
                                 </FormControl>
                             )}
                         />
@@ -495,6 +512,14 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
 
 
               <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4">
+                 <div id="document-export-target" className="hidden">
+                    <div id="document-preview-container-for-export" className="a4-container">
+                         <DocumentPreview 
+                            formData={currentDocumentData} 
+                            settings={defaultSettings}
+                         />
+                    </div>
+                 </div>
                  <Button type="button" variant="outline" onClick={() => handleExport('pdf')} disabled={isExporting}>
                    {isExporting ? <Loader2 className="ms-2 h-4 w-4 animate-spin" /> : <FileDown className="ms-2 h-4 w-4" />}
                    PDF
@@ -519,10 +544,11 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
             <CardTitle>معاينة المستند</CardTitle>
           </CardHeader>
           <CardContent>
-             <div className="w-full bg-gray-100 p-8 rounded-lg shadow-inner overflow-auto max-h-[80vh] no-print">
-                <div id="document-preview-container">
+             <div className="w-full bg-gray-100 p-8 rounded-lg shadow-inner overflow-auto max-h-[80vh]">
+                <div id="document-preview-container" className="no-print">
                     <DocumentPreview 
                         formData={currentDocumentData} 
+                        settings={defaultSettings}
                     />
                 </div>
             </div>
