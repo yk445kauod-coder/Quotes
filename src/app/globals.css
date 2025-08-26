@@ -156,7 +156,7 @@
         box-shadow: none !important;
         border: none !important;
         page-break-after: always; /* Ensure each styled page becomes a real page */
-        color: #1a1a1a; /* Set text to a dark gray (90% black) */
+        color: #000; /* Set text to pure black for clarity */
     }
     
     .a4-page th,
