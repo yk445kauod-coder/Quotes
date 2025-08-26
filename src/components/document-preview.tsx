@@ -125,12 +125,12 @@ export function DocumentPreview({ formData, settings: propSettings }: DocumentPr
           <tbody>
               {chunk.map((item, index) => (
                   <tr key={startIndex + index}>
-                      <td className="border p-1 align-top text-center">{startIndex + index + 1}</td>
+                      <td className="border p-1 align-middle text-center">{startIndex + index + 1}</td>
                       <td className="border p-1 align-top whitespace-pre-wrap">{item.description || ''}</td>
-                      <td className="border p-1 align-top text-center">{item.unit}</td>
-                      <td className="border p-1 align-top text-center">{item.quantity}</td>
-                      <td className="border p-1 align-top text-right">{formatCurrency(item.price || 0)}</td>
-                      <td className="border p-1 align-top text-right">{formatCurrency((item.quantity || 0) * (item.price || 0))}</td>
+                      <td className="border p-1 align-middle text-center">{item.unit}</td>
+                      <td className="border p-1 align-middle text-center">{item.quantity}</td>
+                      <td className="border p-1 align-middle text-center">{formatCurrency(item.price || 0)}</td>
+                      <td className="border p-1 align-middle text-center">{formatCurrency((item.quantity || 0) * (item.price || 0))}</td>
                   </tr>
               ))}
           </tbody>
