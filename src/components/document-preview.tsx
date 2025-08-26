@@ -114,12 +114,12 @@ export function DocumentPreview({ formData, settings: propSettings }: DocumentPr
       <table className="w-full border-collapse text-right mt-4">
           <thead>
               <tr className="bg-gray-100">
-                  <th className="border p-1 w-[5%]">م</th>
-                  <th className="border p-1 w-[45%]">{docType === 'quote' ? 'البيان' : 'البند'}</th>
-                  <th className="border p-1 w-[10%]">الوحدة</th>
-                  <th className="border p-1 w-[10%]">{docType === 'quote' ? 'العدد' : 'الكمية'}</th>
-                  <th className="border p-1 w-[15%]">السعر</th>
-                  <th className="border p-1 w-[15%]">الإجمالي</th>
+                  <th className="border p-1 w-[5%] text-center align-middle">م</th>
+                  <th className="border p-1 w-[45%] text-right align-middle">{docType === 'quote' ? 'البيان' : 'البند'}</th>
+                  <th className="border p-1 w-[10%] text-center align-middle">الوحدة</th>
+                  <th className="border p-1 w-[10%] text-center align-middle">{docType === 'quote' ? 'العدد' : 'الكمية'}</th>
+                  <th className="border p-1 w-[15%] text-center align-middle">السعر</th>
+                  <th className="border p-1 w-[15%] text-center align-middle">الإجمالي</th>
               </tr>
           </thead>
           <tbody>
@@ -149,7 +149,7 @@ export function DocumentPreview({ formData, settings: propSettings }: DocumentPr
                   </>
               )}
           </div>
-          <div className="w-2/5 max-w-sm">
+          <div className="w-2/5 max-w-xs">
               <table className="w-full border-collapse text-right">
                   <tbody>
                       <tr>
