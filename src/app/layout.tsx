@@ -30,7 +30,7 @@ export default function RootLayout({
         <LoadingProvider>
           <div className="relative flex min-h-screen flex-col bg-background" id="main-container">
             <AppHeader />
-            <main className="flex-1" id="printable-area">{children}</main>
+            <main className="flex-1">{children}</main>
           </div>
           <Toaster />
           <LoadingIndicator />

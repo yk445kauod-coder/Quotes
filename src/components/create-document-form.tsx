@@ -557,14 +557,14 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
         </CardContent>
       </Card>
 
-      <div className="sticky top-20 no-print">
+      <div className="sticky top-20">
         <Card>
-          <CardHeader>
+          <CardHeader className="no-print">
             <CardTitle>معاينة المستند</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="w-full bg-gray-100 p-8 rounded-lg shadow-inner overflow-auto max-h-[80vh]">
-                <div id="document-preview-container">
+                <div id="printable-area">
                     <DocumentPreview 
                         formData={currentDocumentData} 
                         settings={defaultSettings}
