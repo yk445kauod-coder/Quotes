@@ -41,6 +41,7 @@ import {
   Eye,
   EyeOff,
   Clock,
+  Printer,
 } from "lucide-react";
 import { saveDocument, updateDocument } from "@/lib/firebase-client";
 import { formatCurrency } from "@/lib/utils";
@@ -256,21 +257,18 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
     }
   }
 
-  const handleExport = async (format: 'pdf' | 'word' | 'excel') => {
+  const handleExport = async (format: 'word' | 'excel') => {
       setIsExporting(true);
       const docId = currentDocumentData.docId || 'document';
       
-      const elementToExport = document.getElementById('document-preview-container');
-      if (!elementToExport) {
-        toast({ variant: "destructive", title: "خطأ", description: "عنصر المعاينة غير موجود." });
-        setIsExporting(false);
-        return;
-      }
-
       try {
-          if (format === 'pdf') {
-              await exportToPdf(elementToExport, docId);
-          } else if (format === 'word') {
+          if (format === 'word') {
+              const elementToExport = document.getElementById('document-preview-container');
+              if (!elementToExport) {
+                toast({ variant: "destructive", title: "خطأ", description: "عنصر المعاينة غير موجود." });
+                setIsExporting(false);
+                return;
+              }
               await exportToWord(elementToExport, docId);
           } else if (format === 'excel') {
               exportToExcel(watchedItems, docId);
@@ -309,8 +307,8 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
     };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-      <Card>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start" id="form-and-preview">
+      <Card className="no-print">
         <CardHeader>
           <div className="flex justify-between items-center">
             <CardTitle>تفاصيل المستند</CardTitle>
@@ -541,8 +539,8 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
 
 
               <div className="flex flex-col sm:flex-row justify-end gap-2 pt-4">
-                 <Button type="button" variant="outline" onClick={() => handleExport('pdf')} disabled={isExporting}>
-                   {isExporting ? <Loader2 className="ms-2 h-4 w-4 animate-spin" /> : <FileDown className="ms-2 h-4 w-4" />}
+                 <Button type="button" variant="outline" onClick={exportToPdf} disabled={isExporting}>
+                   {isExporting ? <Loader2 className="ms-2 h-4 w-4 animate-spin" /> : <Printer className="ms-2 h-4 w-4" />}
                    PDF
                  </Button>
                  <Button type="button" variant="outline" onClick={() => handleExport('word')} disabled={isExporting}>
@@ -559,22 +557,20 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
         </CardContent>
       </Card>
 
-      <div className="sticky top-20">
+      <div className="sticky top-20 no-print">
         <Card>
           <CardHeader>
             <CardTitle>معاينة المستند</CardTitle>
           </CardHeader>
           <CardContent>
-            <div id="document-export-target" className="no-print">
-              <div className="w-full bg-gray-100 p-8 rounded-lg shadow-inner overflow-auto max-h-[80vh]">
-                  <div id="document-preview-container">
-                      <DocumentPreview 
-                          formData={currentDocumentData} 
-                          settings={defaultSettings}
-                          columnVisibility={columnVisibility}
-                      />
-                  </div>
-              </div>
+            <div className="w-full bg-gray-100 p-8 rounded-lg shadow-inner overflow-auto max-h-[80vh]">
+                <div id="document-preview-container">
+                    <DocumentPreview 
+                        formData={currentDocumentData} 
+                        settings={defaultSettings}
+                        columnVisibility={columnVisibility}
+                    />
+                </div>
             </div>
           </CardContent>
         </Card>
@@ -582,5 +578,3 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
     </div>
   );
 }
-
-    

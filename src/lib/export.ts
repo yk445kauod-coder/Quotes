@@ -17,39 +17,11 @@ function convertToCSV(items: DocumentItem[]): string {
 }
 
 /**
- * Exports a given HTML element to a PDF file using html2pdf.js.
- * This version is optimized to act like a "screenshot" of the preview.
- * @param element The HTML element to export.
- * @param fileName The desired name of the output file without extension.
+ * Triggers the browser's print dialog to save the page as a PDF.
+ * This function relies on CSS @media print rules to style the output.
  */
-export async function exportToPdf(element: HTMLElement, fileName: string) {
-    if (!element) {
-        throw new Error("Element to export not found.");
-    }
-    const html2pdf = (await import('html2pdf.js')).default;
-
-    // These options are fine-tuned to ensure the canvas capture is as accurate as possible.
-    const opt = {
-        margin: 0,
-        filename: `${fileName}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: {
-            scale: 3, // High scale for crisp text and images
-            useCORS: true, // Needed for external images like the header
-            logging: false,
-            // By not setting width/height, we let html2canvas determine it from the element itself,
-            // which is more reliable for a "screenshot" approach.
-        },
-        jsPDF: {
-            unit: 'mm',
-            format: 'a4',
-            orientation: 'portrait',
-        },
-        // We rely on our CSS for page breaks.
-        pagebreak: { mode: ['css', 'legacy'] }
-    };
-
-    await html2pdf().from(element).set(opt).save();
+export async function exportToPdf() {
+    window.print();
 }
 
 
@@ -58,7 +30,7 @@ export async function exportToPdf(element: HTMLElement, fileName: string) {
  * @param element The HTML element to export.
  * @param fileName The desired name of the output file.
  */
-export async function exportToWord(element: HTMLElement, fileName: string) {
+export async function exportToWord(element: HTMLElement, fileName:string) {
     if (!element) {
         throw new Error("Element to export not found.");
     }
@@ -143,4 +115,3 @@ export function exportToExcel(items: DocumentItem[], fileName: string) {
     document.body.removeChild(link);
     URL.revokeObjectURL(link.href);
 }
-
