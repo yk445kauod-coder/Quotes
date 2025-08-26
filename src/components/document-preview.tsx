@@ -172,16 +172,16 @@ export function DocumentPreview({ formData, settings: propSettings, columnVisibi
               <table className="w-full border-collapse text-right">
                   <tbody>
                       <tr>
-                          <td className="border p-1 font-bold">المجموع</td>
-                          <td className="border p-1 text-right">{formatCurrency(subTotal)}</td>
+                          <td className="border p-1 font-bold cell-center">المجموع</td>
+                          <td className="border p-1 cell-center">{formatCurrency(subTotal)}</td>
                       </tr>
                       <tr>
-                          <td className="border p-1 font-bold">الضريبة ١٤٪</td>
-                          <td className="border p-1 text-right">{formatCurrency(taxAmount)}</td>
+                          <td className="border p-1 font-bold cell-center">الضريبة ١٤٪</td>
+                          <td className="border p-1 cell-center">{formatCurrency(taxAmount)}</td>
                       </tr>
                       <tr>
-                          <td className="border p-1 font-bold bg-gray-100">الإجمالي الكلي</td>
-                          <td className="border p-1 font-bold bg-gray-100 text-right">{formatCurrency(total)}</td>
+                          <td className="border p-1 font-bold bg-gray-100 cell-center">الإجمالي الكلي</td>
+                          <td className="border p-1 font-bold bg-gray-100 cell-center">{formatCurrency(total)}</td>
                       </tr>
                   </tbody>
               </table>
