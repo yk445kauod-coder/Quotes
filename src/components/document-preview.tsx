@@ -1,7 +1,7 @@
 
 "use client";
 
-import { formatCurrency, formatNumberToHindi } from "@/lib/utils";
+import { formatCurrency, formatNumberToHindi, formatTextWithHindiNumerals } from "@/lib/utils";
 import Image from "next/image";
 import type { DocumentData, SettingsData, DocumentItem } from "@/lib/types";
 import React, { useState, useEffect } from "react";
@@ -72,7 +72,7 @@ export function DocumentPreview({ formData, settings: propSettings }: DocumentPr
 
   const docTypeName = docType === 'quote' ? 'عرض سعر' : 'مقايسة';
   const today = new Date().toLocaleDateString('ar-EG-u-nu-arab', { year: 'numeric', month: '2-digit', day: '2-digit' });
-  const docIdText = docId ? docId : '[سيتم إنشاؤه عند الحفظ]';
+  const docIdText = docId ? formatTextWithHindiNumerals(docId) : '[سيتم إنشاؤه عند الحفظ]';
 
   // Smart Paging Logic:
   const itemChunks: DocumentItem[][] = [];
@@ -128,7 +128,7 @@ export function DocumentPreview({ formData, settings: propSettings }: DocumentPr
               {chunk.map((item, index) => (
                   <tr key={startIndex + index}>
                       <td className="border p-1 cell-center">{formatNumberToHindi(startIndex + index + 1)}</td>
-                      <td className="border p-1 cell-top-right">{item.description || ''}</td>
+                      <td className="border p-1 cell-top-right">{formatTextWithHindiNumerals(item.description || '')}</td>
                       <td className="border p-1 cell-center">{item.unit}</td>
                       <td className="border p-1 cell-center">{formatNumberToHindi(item.quantity || 0)}</td>
                       <td className="border p-1 cell-center">{formatCurrency(item.price || 0)}</td>
@@ -145,9 +145,9 @@ export function DocumentPreview({ formData, settings: propSettings }: DocumentPr
               {docType === 'quote' && (
                   <>
                       <h3 className="font-bold text-sm mb-1">الشروط:</h3>
-                      <div className="whitespace-pre-wrap">{terms || ''}</div>
+                      <div className="whitespace-pre-wrap">{terms ? formatTextWithHindiNumerals(terms) : ''}</div>
                       <h3 className="font-bold text-sm mt-2 mb-1">طريقة الدفع:</h3>
-                      <div className="whitespace-pre-wrap">{paymentMethod || ''}</div>
+                      <div className="whitespace-pre-wrap">{paymentMethod ? formatTextWithHindiNumerals(paymentMethod) : ''}</div>
                   </>
               )}
           </div>
@@ -159,7 +159,7 @@ export function DocumentPreview({ formData, settings: propSettings }: DocumentPr
                           <td className="border p-1 text-right">{formatCurrency(subTotal)}</td>
                       </tr>
                       <tr>
-                          <td className="border p-1 font-bold">الضريبة (14%)</td>
+                          <td className="border p-1 font-bold">الضريبة (١٤٪)</td>
                           <td className="border p-1 text-right">{formatCurrency(taxAmount)}</td>
                       </tr>
                       <tr>
@@ -216,7 +216,7 @@ export function DocumentPreview({ formData, settings: propSettings }: DocumentPr
             </main>
 
             <footer className="w-full mt-auto p-2 border-t-2 border-black text-center text-xs">
-              {resolvedSettings?.footerText && <p className="whitespace-pre-wrap">{resolvedSettings.footerText}</p>}
+              {resolvedSettings?.footerText && <p className="whitespace-pre-wrap">{formatTextWithHindiNumerals(resolvedSettings.footerText)}</p>}
                <div className="mt-1">
                   صفحة {formatNumberToHindi(pageIndex + 1)} من {formatNumberToHindi(totalPages)}
               </div>
