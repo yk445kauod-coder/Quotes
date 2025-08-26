@@ -15,7 +15,7 @@ interface DocumentPreviewProps {
 
 // Function to check for long text in an item
 const hasLongText = (item: DocumentItem) => {
-    const LONG_TEXT_THRESHOLD = 150; // More than ~3 lines of text
+    const LONG_TEXT_THRESHOLD = 200; // More than ~3 lines of text
     return item.description && item.description.length > LONG_TEXT_THRESHOLD;
 };
 
@@ -221,5 +221,3 @@ export function DocumentPreview({ formData, settings: propSettings }: DocumentPr
     </>
   );
 }
-
-    
