@@ -78,6 +78,9 @@ interface CreateDocumentFormProps {
     defaultSettings?: SettingsData;
 }
 
+const FIXED_PAYMENT_METHOD = "نقدا او بأمر دفع على حساب 3913070223277800019 البنك الاهلي فرع كفر الدوار\nاو حساب رقم 5590001000000924 بنك مصر فرع المنتزه";
+
+
 export function CreateDocumentForm({ existingDocument, defaultSettings }: CreateDocumentFormProps) {
   const { toast } = useToast();
   const router = useRouter();
@@ -95,7 +98,7 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
         ? {
             ...existingDocument,
             terms: existingDocument.terms || "",
-            paymentMethod: existingDocument.paymentMethod || "",
+            paymentMethod: existingDocument.paymentMethod || FIXED_PAYMENT_METHOD,
           }
         : {
             docType: "quote",
@@ -103,7 +106,7 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
             subject: "",
             items: [{ description: "", unit: "قطعة", quantity: 1, price: 0 }],
             terms: defaultSettings?.defaultTerms || "",
-            paymentMethod: defaultSettings?.defaultPaymentMethod || "",
+            paymentMethod: FIXED_PAYMENT_METHOD,
         },
   });
 
@@ -111,6 +114,12 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
     control: form.control,
     name: "items",
   });
+  
+  // Set the payment method value on initial render and whenever it might change.
+  useEffect(() => {
+    form.setValue("paymentMethod", FIXED_PAY_METHOD);
+  }, [form]);
+
 
   const watchedItems = form.watch("items") || [];
   const subTotal = watchedItems.reduce(
@@ -127,6 +136,7 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
     id: existingDocument?.id || '',
     docId: existingDocument?.docId || '',
     ...watchedAll,
+    paymentMethod: FIXED_PAYMENT_METHOD, // Always use the fixed value
     subTotal,
     taxAmount,
     total,
@@ -138,11 +148,16 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
     setIsSaving(true);
     showLoading();
     
+    const finalValues = {
+        ...values,
+        paymentMethod: FIXED_PAYMENT_METHOD, // Ensure fixed value is saved
+    };
+
     try {
       if (isEditMode && existingDocument) {
         const docToUpdate: DocumentData = {
           ...existingDocument,
-          ...values,
+          ...finalValues,
           subTotal,
           taxAmount,
           total,
@@ -154,7 +169,7 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
         });
       } else {
         const docToSave: Omit<DocumentData, 'id' | 'docId'> = {
-          ...values,
+          ...finalValues,
           subTotal,
           taxAmount,
           total,
@@ -185,7 +200,6 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
       setIsExporting(true);
       const docId = currentDocumentData.docId || 'document';
       
-      // We always target the container with the pages now
       const elementToExport = document.getElementById('document-preview-container');
       if (!elementToExport) {
         toast({ variant: "destructive", title: "خطأ", description: "عنصر المعاينة غير موجود." });
@@ -233,10 +247,10 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
 
       const suggestions = await response.json();
       form.setValue("terms", suggestions.suggestedTerms);
-      form.setValue("paymentMethod", suggestions.suggestedPaymentMethod);
+      // We don't set payment method from suggestions anymore
       toast({
         title: "تم!",
-        description: "تم إنشاء الاقتراحات بنجاح.",
+        description: "تم إنشاء اقتراحات للشروط بنجاح.",
       });
 
     } catch (error) {
@@ -469,7 +483,7 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
                             disabled={isSuggesting || defaultSettings?.pinTermsAndPayment}
                         >
                             {isSuggesting ? <Loader2 className="ms-2 h-4 w-4 animate-spin" /> : <Wand2 className="ms-2 h-4 w-4" />}
-                            اقتراح ذكي
+                            اقتراح شروط
                         </Button>
                         </div>
                         <FormField
@@ -491,21 +505,14 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
 
                     <div className="space-y-2">
                         <FormLabel htmlFor="paymentMethod">طريقة الدفع</FormLabel>
-                        <FormField
-                            control={form.control}
-                            name="paymentMethod"
-                            render={({ field }) => (
-                                <FormControl>
-                                     <Textarea 
-                                        {...field} 
-                                        rows={3} 
-                                        placeholder="اكتب طريقة الدفع هنا..." 
-                                        readOnly={defaultSettings?.pinTermsAndPayment}
-                                        className={defaultSettings?.pinTermsAndPayment ? "bg-muted cursor-not-allowed" : ""}
-                                     />
-                                </FormControl>
-                            )}
-                        />
+                         <FormControl>
+                             <Textarea 
+                                value={FIXED_PAYMENT_METHOD}
+                                readOnly
+                                rows={3} 
+                                className="bg-muted cursor-not-allowed"
+                             />
+                        </FormControl>
                     </div>
                 </>
               )}
@@ -544,8 +551,8 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
             <CardTitle>معاينة المستند</CardTitle>
           </CardHeader>
           <CardContent>
-             <div className="w-full bg-gray-100 p-8 rounded-lg shadow-inner overflow-auto max-h-[80vh]">
-                <div id="document-preview-container" className="no-print">
+             <div className="w-full bg-gray-100 p-8 rounded-lg shadow-inner overflow-auto max-h-[80vh] no-print">
+                <div id="document-preview-container">
                     <DocumentPreview 
                         formData={currentDocumentData} 
                         settings={defaultSettings}

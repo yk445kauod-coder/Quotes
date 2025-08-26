@@ -1,3 +1,4 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -27,7 +28,6 @@ const formSchema = z.object({
   headerImageUrl: z.string().url("يجب أن يكون رابطًا صحيحًا."),
   footerText: z.string().min(1, "نص التذييل مطلوب."),
   defaultTerms: z.string().optional(),
-  defaultPaymentMethod: z.string().optional(),
   pinTermsAndPayment: z.boolean().optional(),
   itemsPerPage: z.coerce
     .number()
@@ -58,7 +58,9 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
   async function onSubmit(values: FormValues) {
     setIsSaving(true);
     try {
-      await saveSettings(values);
+      // Ensure we don't save a payment method field that no longer exists in the schema
+      const { ...settingsToSave } = values;
+      await saveSettings(settingsToSave as SettingsData);
       toast({
         title: "تم الحفظ بنجاح",
         description: "تم تحديث إعدادات المستند.",
@@ -132,24 +134,7 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
                   </FormItem>
                 )}
               />
-               <FormField
-                control={form.control}
-                name="defaultPaymentMethod"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>طريقة الدفع الافتراضية</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="طريقة الدفع التي تظهر عند إنشاء مستند جديد..."
-                        {...field}
-                        rows={4}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
+              
                <FormField
                 control={form.control}
                 name="itemsPerPage"
@@ -174,10 +159,10 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
                         <FormLabel className="text-base">
-                            تثبيت الشروط والدفع
+                            تثبيت الشروط
                         </FormLabel>
                         <FormDescription>
-                            عند تفعيل هذا الخيار، ستكون حقول الشروط وطريقة الدفع للقراءة فقط في نموذج الإنشاء.
+                            عند تفعيل هذا الخيار، سيكون حقل الشروط للقراءة فقط في نموذج الإنشاء.
                         </FormDescription>
                     </div>
                     <FormControl>
