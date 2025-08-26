@@ -184,19 +184,21 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
   const handleExport = async (format: 'pdf' | 'word' | 'excel') => {
       setIsExporting(true);
       const docId = currentDocumentData.docId || 'document';
-      const previewElement = document.getElementById('document-preview-container');
-      if (!previewElement) {
+      const exportContainer = document.getElementById('document-preview-container');
+      if (!exportContainer) {
         toast({ variant: "destructive", title: "خطأ", description: "عنصر المعاينة غير موجود." });
         setIsExporting(false);
         return;
       }
+      
+      // We clone the node to modify it for export without affecting the view
+      const elementToExport = exportContainer.cloneNode(true) as HTMLElement;
 
       try {
           if (format === 'pdf') {
-              await exportToPdf(previewElement, docId);
+              await exportToPdf(elementToExport, docId);
           } else if (format === 'word') {
-              // The new exportToPdf function handles Word as well by generating HTML
-              await exportToWord(previewElement, docId);
+              await exportToWord(elementToExport, docId);
           } else if (format === 'excel') {
               exportToExcel(watchedItems, docId);
           }
@@ -517,10 +519,12 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
             <CardTitle>معاينة المستند</CardTitle>
           </CardHeader>
           <CardContent>
-             <div id="document-preview-container" className="w-full bg-gray-100 p-8 rounded-lg shadow-inner overflow-auto max-h-[80vh]">
-                <DocumentPreview 
-                    formData={currentDocumentData} 
-                />
+             <div className="w-full bg-gray-100 p-8 rounded-lg shadow-inner overflow-auto max-h-[80vh] no-print">
+                <div id="document-preview-container">
+                    <DocumentPreview 
+                        formData={currentDocumentData} 
+                    />
+                </div>
             </div>
           </CardContent>
         </Card>
