@@ -27,53 +27,60 @@ export async function exportToPdf(element: HTMLElement, fileName: string) {
     }
     const html2pdf = (await import('html2pdf.js')).default;
 
+    // The options are critical for getting the output right.
     const opt = {
-        margin: 0,
+        margin: 0, // We control margins with CSS on the .a4-page
         filename: `${fileName}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { 
-            scale: 2, 
+            scale: 2, // Higher scale for better quality
             useCORS: true, 
-            logging: false, 
-            // Ensures the canvas captures the full scrollable content
-            width: element.scrollWidth,
-            height: element.scrollHeight,
-            windowWidth: element.scrollWidth,
-            windowHeight: element.scrollHeight,
+            logging: false,
+            // These are important to ensure the full content is captured
+            scrollX: 0,
+            scrollY: -window.scrollY,
+            windowWidth: document.documentElement.offsetWidth,
+            windowHeight: document.documentElement.offsetHeight,
         },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['css', 'legacy'] }
+        // Let our CSS control the page breaks
+        pagebreak: { mode: ['css', 'legacy'] } 
     };
     
+    // html2pdf can work directly with the element.
     await html2pdf().from(element).set(opt).save();
 }
 
+
 /**
- * Exports a given HTML element to a Word (.doc) file.
+ * Exports a given HTML element to a Word (.doc) file by wrapping it in the necessary HTML structure.
  * @param element The HTML element to export.
  * @param fileName The desired name of the output file.
  */
-export async function exportToWord(element: HTMLElement, fileName:string) {
+export async function exportToWord(element: HTMLElement, fileName: string) {
     if (!element) {
         throw new Error("Element to export not found.");
     }
     
+    // Get the element's static HTML content
     const staticHtml = element.innerHTML;
 
-    // Fetch all computed styles from the document
+    // Consolidate all styles from the document's stylesheets
     const styles = Array.from(document.styleSheets)
         .map(styleSheet => {
             try {
+                // Join all rules from a single stylesheet
                 return Array.from(styleSheet.cssRules)
                     .map(rule => rule.cssText)
-                    .join('');
+                    .join('\n');
             } catch (e) {
-                // Ignore stylesheets that can't be accessed
+                // Ignore stylesheets that can't be accessed (e.g., cross-origin)
                 return '';
             }
         })
-        .join('');
+        .join('\n');
 
+    // Create the full HTML structure for the Word document
     const wordHtml = `
       <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
       <head>
@@ -83,7 +90,7 @@ export async function exportToWord(element: HTMLElement, fileName:string) {
         <xml>
           <w:WordDocument>
             <w:View>Print</w:View>
-            <w:Zoom>100</w:Zoom>
+            <w:Zoom>90</w:Zoom>
             <w:DoNotOptimizeForBrowser/>
             <w:RtlGutter/>
           </w:WordDocument>
@@ -92,27 +99,16 @@ export async function exportToWord(element: HTMLElement, fileName:string) {
         <style>
             /* All the CSS from the document is injected here */
             ${styles}
-
-            /* Extra styles for Word compatibility */
-            @page WordSection1 {
-                size: 210mm 297mm;
-                margin: 15mm 15mm 20mm 15mm;
-            }
-            div.WordSection1 {
-                page: WordSection1;
-            }
-            body {
-                direction: rtl;
-            }
         </style>
       </head>
-      <body lang=AR-SA>
+      <body lang="AR-SA" dir="RTL">
         <div class="WordSection1">
             ${staticHtml}
         </div>
       </body>
       </html>`;
 
+    // Create a Blob and trigger the download
     const blob = new Blob(['\ufeff', wordHtml], {
         type: 'application/msword'
     });
@@ -126,6 +122,7 @@ export async function exportToWord(element: HTMLElement, fileName:string) {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 }
+
 
 /**
  * Exports an array of items to a CSV file.

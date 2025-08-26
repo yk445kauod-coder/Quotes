@@ -195,6 +195,7 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
           if (format === 'pdf') {
               await exportToPdf(previewElement, docId);
           } else if (format === 'word') {
+              // The new exportToPdf function handles Word as well by generating HTML
               await exportToWord(previewElement, docId);
           } else if (format === 'excel') {
               exportToExcel(watchedItems, docId);
@@ -516,7 +517,7 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
             <CardTitle>معاينة المستند</CardTitle>
           </CardHeader>
           <CardContent>
-            <div id="document-preview-container" className="w-full bg-gray-100 p-4 rounded-lg shadow-inner overflow-auto max-h-[80vh]">
+             <div id="document-preview-container" className="w-full bg-gray-100 p-8 rounded-lg shadow-inner overflow-auto max-h-[80vh]">
                 <DocumentPreview 
                     formData={currentDocumentData} 
                 />

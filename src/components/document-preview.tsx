@@ -3,7 +3,7 @@
 
 import { formatCurrency } from "@/lib/utils";
 import Image from "next/image";
-import type { DocumentData, SettingsData } from "@/lib/types";
+import type { DocumentData, SettingsData, DocumentItem } from "@/lib/types";
 import React, { useState, useEffect } from "react";
 import { getSettings } from "@/lib/firebase-client";
 import { Skeleton } from "./ui/skeleton";
@@ -25,7 +25,6 @@ export function DocumentPreview({ formData }: DocumentPreviewProps) {
         setSettings(fetchedSettings);
       } catch (error) {
         console.error("Failed to load settings for preview:", error);
-        // Set default settings on error to prevent crash
         setSettings({
             headerImageUrl: "https://placehold.co/700x100.png",
             footerText: "Error loading settings"
@@ -68,14 +67,20 @@ export function DocumentPreview({ formData }: DocumentPreviewProps) {
   const today = new Date().toLocaleDateString('ar-EG-u-nu-latn', { year: 'numeric', month: '2-digit', day: '2-digit' });
   const docIdText = docId ? docId : '[سيتم إنشاؤه عند الحفظ]';
 
-  const itemChunks = [];
-  for (let i = 0; i < items.length; i += ITEMS_PER_PAGE) {
-    itemChunks.push(items.slice(i, i + ITEMS_PER_PAGE));
+  // Chunk the items into pages
+  const itemChunks: DocumentItem[][] = [];
+  if (items && items.length > 0) {
+    for (let i = 0; i < items.length; i += ITEMS_PER_PAGE) {
+      itemChunks.push(items.slice(i, i + ITEMS_PER_PAGE));
+    }
+  } else {
+    // Ensure there is at least one page even if there are no items
+    itemChunks.push([]);
   }
 
   const totalPages = itemChunks.length;
 
-  const renderTable = (chunk: typeof items, startIndex: number) => (
+  const renderTable = (chunk: DocumentItem[], startIndex: number) => (
       <table className="w-full border-collapse text-right text-xs mt-4">
           <thead>
               <tr className="bg-gray-100">
@@ -139,42 +144,46 @@ export function DocumentPreview({ formData }: DocumentPreviewProps) {
     <>
       {itemChunks.map((chunk, pageIndex) => (
         <div key={pageIndex} className="a4-page">
-          {pageIndex === 0 && (
-            <header className="w-full mb-4">
-              {settings?.headerImageUrl && (
+          <header className="w-full">
+            {pageIndex === 0 && settings?.headerImageUrl && (
                 <Image
                   src={settings.headerImageUrl}
                   alt="Company Header"
                   width={794}
                   height={120}
-                  className="w-full h-auto object-contain"
+                  className="w-full h-auto object-contain mb-4"
                   data-ai-hint="company logo"
                   priority
                   unoptimized
                 />
-              )}
-               <div className="text-center my-4">
-                    <h2 className="text-xl font-bold underline">{docTypeName}</h2>
-                </div>
-                <div className="flex justify-between mb-4 text-sm">
-                    <span>التاريخ: {today}</span>
-                    <span>{docTypeName} رقم: {docIdText}</span>
-                </div>
-                <div className="mb-4 text-sm">
-                    <p><span className="font-bold">السادة/</span> {clientName}</p>
-                    <p><span className="font-bold">الموضوع:</span> {subject}</p>
-                </div>
-            </header>
-          )}
+            )}
+             {pageIndex === 0 && (
+                <>
+                    <div className="text-center my-4">
+                        <h2 className="text-xl font-bold underline">{docTypeName}</h2>
+                    </div>
+                    <div className="flex justify-between mb-4 text-sm">
+                        <span>التاريخ: {today}</span>
+                        <span>{docTypeName} رقم: {docIdText}</span>
+                    </div>
+                    <div className="mb-4 text-sm">
+                        <p><span className="font-bold">السادة/</span> {clientName}</p>
+                        <p><span className="font-bold">الموضوع:</span> {subject}</p>
+                    </div>
+                </>
+             )}
+          </header>
 
           <main>
             {renderTable(chunk, pageIndex * ITEMS_PER_PAGE)}
-            {/* Render summary only on the last page */}
             {pageIndex === totalPages - 1 && renderSummaryAndTerms()}
           </main>
 
-          <footer className="w-full mt-4 p-2 border-t-2 border-black text-center text-xs">
+          <footer className="w-full mt-auto p-2 border-t-2 border-black text-center text-xs">
             {settings?.footerText && <p className="whitespace-pre-wrap">{settings.footerText}</p>}
+             <div className="mt-1">
+                صفحة {pageIndex + 1} من {totalPages}
+            </div>
           </footer>
         </div>
       ))}
