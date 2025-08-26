@@ -40,16 +40,19 @@ import {
   Loader2,
   Eye,
   EyeOff,
+  Clock,
 } from "lucide-react";
 import { saveDocument, updateDocument } from "@/lib/firebase-client";
 import { formatCurrency } from "@/lib/utils";
 import type { DocumentData, SettingsData } from "@/lib/types";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { exportToPdf, exportToWord, exportToExcel } from "@/lib/export";
 import { Textarea } from "./ui/textarea";
 import { useLoading } from "@/context/loading-context";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
+import { Switch } from "./ui/switch";
+import { Label } from "./ui/label";
 
 
 const formSchema = z.object({
@@ -85,6 +88,7 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
   const { showLoading, hideLoading } = useLoading();
   const [isSaving, setIsSaving] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [isAutoSaving, setIsAutoSaving] = useState(false);
   const isEditMode = !!existingDocument;
 
   // State for column visibility
@@ -117,7 +121,7 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
             subject: "",
             items: [{ description: "", unit: "قطعة", quantity: 1, price: 0 }],
             terms: defaultSettings?.defaultTerms || "",
-            paymentMethod: defaultSettings?.defaultPaymentMethod || "",
+            paymentMethod: defaultSettings?.defaultPaymentMethod || "قدا او بأمر دفع على حساب 3913070223277800019 البنك الاهلي فرع كفر الدوار او حساب رقم 5590001000000924 بنك مصر فرع المنتزه",
         },
   });
 
@@ -145,6 +149,38 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
     total,
     createdAt: existingDocument?.createdAt || new Date().toISOString(),
   };
+  
+  // Auto-Save Logic
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isAutoSaving && isEditMode && existingDocument) {
+      interval = setInterval(async () => {
+        try {
+          const values = form.getValues();
+          const docToUpdate: DocumentData = {
+            ...existingDocument,
+            ...values,
+            subTotal,
+            taxAmount,
+            total,
+          };
+          await updateDocument(existingDocument.id, docToUpdate);
+          toast({
+            title: "تم الحفظ تلقائياً",
+            description: `تم حفظ المستند ${existingDocument.docId} في ${new Date().toLocaleTimeString('ar-EG')}`,
+            duration: 2000,
+          });
+        } catch (error) {
+          toast({
+            variant: "destructive",
+            title: "فشل الحفظ التلقائي",
+            description: "حدث خطأ أثناء محاولة حفظ المستند تلقائياً.",
+          });
+        }
+      }, 5 * 60 * 1000); // 5 minutes
+    }
+    return () => clearInterval(interval); // Cleanup on unmount or if auto-save is turned off
+  }, [isAutoSaving, isEditMode, existingDocument, form, subTotal, taxAmount, total, toast]);
 
 
   async function onSubmit(values: FormValues) {
@@ -250,7 +286,22 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
       <Card>
         <CardHeader>
-          <CardTitle>تفاصيل المستند</CardTitle>
+          <div className="flex justify-between items-center">
+            <CardTitle>تفاصيل المستند</CardTitle>
+            {isEditMode && (
+                <div className="flex items-center space-x-2">
+                    <Switch
+                        id="auto-save"
+                        checked={isAutoSaving}
+                        onCheckedChange={setIsAutoSaving}
+                    />
+                    <Label htmlFor="auto-save" className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <Clock className="h-4 w-4" />
+                        حفظ تلقائي
+                    </Label>
+                </div>
+            )}
+           </div>
         </CardHeader>
         <CardContent>
           <Form {...form}>
