@@ -75,9 +75,6 @@ interface CreateDocumentFormProps {
     defaultSettings?: SettingsData;
 }
 
-const FIXED_PAYMENT_METHOD = "نقدا او بأمر دفع على حساب 3913070223277800019 البنك الاهلي فرع كفر الدوار\nاو حساب رقم 5590001000000924 بنك مصر فرع المنتزه";
-
-
 export function CreateDocumentForm({ existingDocument, defaultSettings }: CreateDocumentFormProps) {
   const { toast } = useToast();
   const router = useRouter();
@@ -93,7 +90,7 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
         ? {
             ...existingDocument,
             terms: existingDocument.terms || "",
-            paymentMethod: existingDocument.paymentMethod || FIXED_PAYMENT_METHOD,
+            paymentMethod: existingDocument.paymentMethod || "",
           }
         : {
             docType: "quote",
@@ -101,7 +98,7 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
             subject: "",
             items: [{ description: "", unit: "قطعة", quantity: 1, price: 0 }],
             terms: defaultSettings?.defaultTerms || "",
-            paymentMethod: FIXED_PAYMENT_METHOD,
+            paymentMethod: defaultSettings?.defaultPaymentMethod || "",
         },
   });
 
@@ -109,12 +106,6 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
     control: form.control,
     name: "items",
   });
-  
-  // Set the payment method value on initial render and whenever it might change.
-  useEffect(() => {
-    form.setValue("paymentMethod", FIXED_PAYMENT_METHOD);
-  }, [form]);
-
 
   const watchedItems = form.watch("items") || [];
   const subTotal = watchedItems.reduce(
@@ -130,7 +121,6 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
     id: existingDocument?.id || '',
     docId: existingDocument?.docId || '',
     ...watchedAll,
-    paymentMethod: FIXED_PAYMENT_METHOD, // Always use the fixed value
     subTotal,
     taxAmount,
     total,
@@ -141,17 +131,12 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
   async function onSubmit(values: FormValues) {
     setIsSaving(true);
     showLoading();
-    
-    const finalValues = {
-        ...values,
-        paymentMethod: FIXED_PAYMENT_METHOD, // Ensure fixed value is saved
-    };
 
     try {
       if (isEditMode && existingDocument) {
         const docToUpdate: DocumentData = {
           ...existingDocument,
-          ...finalValues,
+          ...values,
           subTotal,
           taxAmount,
           total,
@@ -163,7 +148,7 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
         });
       } else {
         const docToSave: Omit<DocumentData, 'id' | 'docId'> = {
-          ...finalValues,
+          ...values,
           subTotal,
           taxAmount,
           total,
@@ -398,14 +383,19 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
 
                     <div className="space-y-2">
                         <FormLabel htmlFor="paymentMethod">طريقة الدفع</FormLabel>
-                         <FormControl>
-                             <Textarea 
-                                value={FIXED_PAYMENT_METHOD}
-                                readOnly
-                                rows={3} 
-                                className="bg-muted cursor-not-allowed"
-                             />
-                        </FormControl>
+                         <FormField
+                            control={form.control}
+                            name="paymentMethod"
+                            render={({ field }) => (
+                                <FormControl>
+                                    <Textarea 
+                                        {...field} 
+                                        rows={3} 
+                                        placeholder="اكتب طريقة الدفع هنا..."
+                                    />
+                                </FormControl>
+                            )}
+                        />
                     </div>
                 </>
               )}
@@ -452,5 +442,3 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
     </div>
   );
 }
-
-    

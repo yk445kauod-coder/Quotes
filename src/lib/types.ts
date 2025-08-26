@@ -16,7 +16,7 @@ export interface DocumentData {
   subject: string;
   items: DocumentItem[];
   terms?: string;
-  paymentMethod: string; // Made mandatory
+  paymentMethod?: string;
   createdAt: string; // Stored as ISO string
   subTotal: number;
   taxAmount: number;
@@ -27,5 +27,6 @@ export interface SettingsData {
   headerImageUrl: string;
   footerText: string;
   defaultTerms?: string;
+  defaultPaymentMethod?: string;
   itemsPerPage?: number;
 }

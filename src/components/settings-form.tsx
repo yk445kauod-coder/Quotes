@@ -1,4 +1,3 @@
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -27,6 +26,7 @@ const formSchema = z.object({
   headerImageUrl: z.string().url("يجب أن يكون رابطًا صحيحًا."),
   footerText: z.string().min(1, "نص التذييل مطلوب."),
   defaultTerms: z.string().optional(),
+  defaultPaymentMethod: z.string().optional(),
   itemsPerPage: z.coerce
     .number()
     .min(1, "يجب أن يكون العدد 1 على الأقل.")
@@ -123,6 +123,24 @@ export function SettingsForm({ initialSettings }: SettingsFormProps) {
                         placeholder="الشروط والأحكام التي تظهر عند إنشاء مستند جديد..."
                         {...field}
                         rows={5}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="defaultPaymentMethod"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>طريقة الدفع الافتراضية</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="طريقة الدفع التي تظهر عند إنشاء مستند جديد..."
+                        {...field}
+                        rows={3}
                       />
                     </FormControl>
                     <FormMessage />
