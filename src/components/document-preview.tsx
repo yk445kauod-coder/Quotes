@@ -104,7 +104,9 @@ export function DocumentPreview({ formData, settings: propSettings, columnVisibi
               (item) => (item.description || '').length > LONG_TEXT_THRESHOLD
           );
           
-          if (hasLongText) {
+          // Apply long text rule only if there are more than 3 items in total
+          // and at least one item in the current chunk has a long description.
+          if (items.length > 3 && hasLongText) {
              if(pageIndex === 0) {
                  pageSize = 6;
              } else {
