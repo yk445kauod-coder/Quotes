@@ -87,7 +87,7 @@ export function DocumentPreview({ formData, settings: propSettings }: DocumentPr
       let currentIndex = 0;
       while (currentIndex < items.length) {
           const defaultPageSize = resolvedSettings.itemsPerPage;
-          const smartPageSize = 5; // Reduced size for pages with long text
+          const smartPageSize = 6; // Reduced size for pages with long text
 
           // Look ahead to see if any item in the next potential chunk has long text
           const lookaheadChunk = items.slice(currentIndex, currentIndex + defaultPageSize);
