@@ -117,7 +117,7 @@ export function DocumentPreview({ formData, settings: propSettings }: DocumentPr
           <thead>
               <tr className="bg-gray-100">
                   <th className="border p-1 w-[5%] cell-center">م</th>
-                  <th className="border p-1 w-[45%] text-right align-middle">{docType === 'quote' ? 'البيان' : 'البند'}</th>
+                  <th className="border p-1 w-[45%] cell-center">{docType === 'quote' ? 'البيان' : 'البند'}</th>
                   <th className="border p-1 w-[10%] cell-center">الوحدة</th>
                   <th className="border p-1 w-[10%] cell-center">{docType === 'quote' ? 'العدد' : 'الكمية'}</th>
                   <th className="border p-1 w-[15%] cell-center">السعر</th>
