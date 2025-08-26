@@ -45,8 +45,8 @@ export function formatTextWithHindiNumerals(text: string): string {
   // Then, add a space between any sequence of digits and any adjacent non-digit/non-space character.
   // This is a more robust way to handle the spacing issue.
   const hindiNumerals = '٠١٢٣٤٥٦٧٨٩';
-  // Add space after a number sequence if it's followed by a non-digit, non-space character
-  processedText = processedText.replace(new RegExp(`([${hindiNumerals}]+)([^${hindiNumerals}\\s])`, 'g'), '$1 $2');
+  // Add space after a number sequence if it's followed by a non-digit, non-space, non-percent character
+  processedText = processedText.replace(new RegExp(`([${hindiNumerals}]+)([^${hindiNumerals}\\s%.,])`, 'g'), '$1 $2');
   // Add space before a number sequence if it's preceded by a non-digit, non-space character
   processedText = processedText.replace(new RegExp(`([^${hindiNumerals}\\s])([${hindiNumerals}]+)`, 'g'), '$1 $2');
 
