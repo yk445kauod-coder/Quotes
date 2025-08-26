@@ -1,3 +1,4 @@
+
 "use client";
 
 import { getDocumentById, getSettings } from "@/lib/firebase-client";

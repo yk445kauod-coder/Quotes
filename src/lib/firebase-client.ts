@@ -105,6 +105,26 @@ export async function deleteDocument(id: string): Promise<void> {
   await remove(documentRef);
 }
 
+/**
+ * Gets a single document by its ID from the Realtime Database for client-side usage.
+ * @param id The unique key of the document to fetch.
+ * @returns A promise resolving to the document data or null if not found.
+ */
+export async function getDocumentById(id: string): Promise<DocumentData | null> {
+    initializeDb();
+    const documentRef = ref(db, `documents/${id}`);
+    try {
+        const snapshot = await get(documentRef);
+        if (snapshot.exists()) {
+            return { ...snapshot.val(), id: snapshot.key } as DocumentData;
+        }
+        return null;
+    } catch (error) {
+        console.error(`Client Error fetching document ${id}:`, error);
+        return null;
+    }
+}
+
 
 // --- Settings Functions ---
 
