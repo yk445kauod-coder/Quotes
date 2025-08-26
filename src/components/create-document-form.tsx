@@ -112,6 +112,10 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
     defaultValues: isEditMode && existingDocument 
         ? {
             ...existingDocument,
+            items: existingDocument.items.map(item => ({
+              ...item,
+              description: (item.description || '').replace(/[()]/g, ''),
+            })),
             terms: existingDocument.terms || "",
             paymentMethod: existingDocument.paymentMethod || "",
           }
@@ -155,7 +159,9 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
     let intervalId: NodeJS.Timeout | null = null;
   
     const autoSave = async () => {
+      // Ensure we are in edit mode and have the document data
       if (isEditMode && existingDocument) {
+        setIsSaving(true);
         try {
           const values = form.getValues();
           const docToUpdate: DocumentData = {
@@ -172,19 +178,29 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
             duration: 2000,
           });
         } catch (error) {
+          console.error("Auto-save failed:", error);
           toast({
             variant: "destructive",
             title: "فشل الحفظ التلقائي",
             description: "حدث خطأ أثناء محاولة حفظ المستند تلقائياً.",
           });
+        } finally {
+          setIsSaving(false);
         }
       }
     };
   
+    // Set up or clear the interval based on isAutoSaving state
     if (isAutoSaving) {
       intervalId = setInterval(autoSave, 5 * 60 * 1000); // 5 minutes
+    } else {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
     }
   
+    // Cleanup function to clear the interval when the component unmounts
+    // or when dependencies change.
     return () => {
       if (intervalId) {
         clearInterval(intervalId);
@@ -408,7 +424,16 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
                               name={`items.${index}.description`}
                               render={({ field }) => (
                                 <FormControl>
-                                    <Textarea {...field} placeholder="وصف البند" rows={2} />
+                                  <Textarea
+                                    {...field}
+                                    placeholder="وصف البند"
+                                    rows={2}
+                                    onChange={(e) => {
+                                      // Remove parentheses from the input value
+                                      const sanitizedValue = e.target.value.replace(/[()]/g, '');
+                                      field.onChange(sanitizedValue);
+                                    }}
+                                  />
                                 </FormControl>
                               )}
                             />
@@ -557,3 +582,5 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
     </div>
   );
 }
+
+    
