@@ -13,6 +13,13 @@ interface DocumentPreviewProps {
   settings?: SettingsData | null;
 }
 
+// Function to check for long text in an item
+const hasLongText = (item: DocumentItem) => {
+    const LONG_TEXT_THRESHOLD = 150; // More than ~3 lines of text
+    return item.description && item.description.length > LONG_TEXT_THRESHOLD;
+};
+
+
 export function DocumentPreview({ formData, settings: propSettings }: DocumentPreviewProps) {
   const [settings, setSettings] = useState<SettingsData | null | undefined>(propSettings);
   const [loading, setLoading] = useState(true);
@@ -67,23 +74,34 @@ export function DocumentPreview({ formData, settings: propSettings }: DocumentPr
   const resolvedSettings = {
     headerImageUrl: settings?.headerImageUrl || "https://ik.imagekit.io/fpbwa3np7/%D8%A8%D8%B1%D9%86%D8%A7%D9%85%D8%AC%20%D8%B9%D8%B1%D9%88%D8%B6%20%D8%A7%D9%84%D8%A7%D8%B3%D8%B9%D8%A7%D8%B1/header%20-%20Copy.png?updatedAt=1755348570527",
     footerText: settings?.footerText || "Footer text not set",
-    itemsPerPage: settings?.itemsPerPage || 16,
+    itemsPerPage: settings?.itemsPerPage || 17,
   }
 
-  const ITEMS_PER_PAGE = resolvedSettings.itemsPerPage;
   const docTypeName = docType === 'quote' ? 'عرض سعر' : 'مقايسة';
   const today = new Date().toLocaleDateString('ar-EG-u-nu-latn', { year: 'numeric', month: '2-digit', day: '2-digit' });
   const docIdText = docId ? docId : '[سيتم إنشاؤه عند الحفظ]';
 
-  // Chunk the items into pages
+  // Smart Paging Logic
   const itemChunks: DocumentItem[][] = [];
   if (items && items.length > 0) {
-    for (let i = 0; i < items.length; i += ITEMS_PER_PAGE) {
-      itemChunks.push(items.slice(i, i + ITEMS_PER_PAGE));
-    }
+      let currentIndex = 0;
+      while (currentIndex < items.length) {
+          const defaultPageSize = resolvedSettings.itemsPerPage;
+          const smartPageSize = 5; // Reduced size for pages with long text
+
+          // Look ahead to see if any item in the next potential chunk has long text
+          const lookaheadChunk = items.slice(currentIndex, currentIndex + defaultPageSize);
+          const containsLongText = lookaheadChunk.some(hasLongText);
+
+          const currentPageSize = containsLongText ? smartPageSize : defaultPageSize;
+          
+          const chunk = items.slice(currentIndex, currentIndex + currentPageSize);
+          itemChunks.push(chunk);
+          currentIndex += chunk.length;
+      }
   } else {
-    // Ensure there is at least one page even if there are no items
-    itemChunks.push([]);
+      // Ensure there is at least one page even if there are no items
+      itemChunks.push([]);
   }
 
   const totalPages = itemChunks.length;
@@ -150,51 +168,58 @@ export function DocumentPreview({ formData, settings: propSettings }: DocumentPr
 
   return (
     <>
-      {itemChunks.map((chunk, pageIndex) => (
-        <div key={pageIndex} className="a4-page">
-          <header className="w-full">
-            {pageIndex === 0 && resolvedSettings?.headerImageUrl && (
-                <Image
-                  src={resolvedSettings.headerImageUrl}
-                  alt="Company Header"
-                  width={794}
-                  height={100}
-                  className="w-full h-auto object-contain mb-2"
-                  data-ai-hint="company logo"
-                  priority
-                  unoptimized
-                />
-            )}
-             {pageIndex === 0 && (
-                <>
-                    <div className="text-center my-2">
-                        <h2 className="text-xl font-bold underline">{docTypeName}</h2>
-                    </div>
-                    <div className="flex justify-between mb-2 text-sm">
-                        <span>التاريخ: {today}</span>
-                        <span>{docTypeName} رقم: {docIdText}</span>
-                    </div>
-                    <div className="mb-2 text-sm">
-                        <p><span className="font-bold">السادة/</span> {clientName}</p>
-                        <p><span className="font-bold">الموضوع:</span> {subject}</p>
-                    </div>
-                </>
-             )}
-          </header>
+      {itemChunks.map((chunk, pageIndex) => {
+        const isLastPage = pageIndex === totalPages - 1;
+        const startIndex = itemChunks.slice(0, pageIndex).reduce((acc, c) => acc + c.length, 0);
 
-          <main>
-            {renderTable(chunk, pageIndex * ITEMS_PER_PAGE)}
-            {pageIndex === totalPages - 1 && renderSummaryAndTerms()}
-          </main>
+        return (
+          <div key={pageIndex} className="a4-page">
+            <header className="w-full">
+              {pageIndex === 0 && resolvedSettings?.headerImageUrl && (
+                  <Image
+                    src={resolvedSettings.headerImageUrl}
+                    alt="Company Header"
+                    width={794}
+                    height={100}
+                    className="w-full h-auto object-contain mb-2"
+                    data-ai-hint="company logo"
+                    priority
+                    unoptimized
+                  />
+              )}
+               {pageIndex === 0 && (
+                  <>
+                      <div className="text-center my-2">
+                          <h2 className="text-xl font-bold underline">{docTypeName}</h2>
+                      </div>
+                      <div className="flex justify-between mb-2 text-sm">
+                          <span>التاريخ: {today}</span>
+                          <span>{docTypeName} رقم: {docIdText}</span>
+                      </div>
+                      <div className="mb-2 text-sm">
+                          <p><span className="font-bold">السادة/</span> {clientName}</p>
+                          <p><span className="font-bold">الموضوع:</span> {subject}</p>
+                      </div>
+                  </>
+               )}
+            </header>
 
-          <footer className="w-full mt-auto p-2 border-t-2 border-black text-center text-xs">
-            {resolvedSettings?.footerText && <p className="whitespace-pre-wrap">{resolvedSettings.footerText}</p>}
-             <div className="mt-1">
-                صفحة {pageIndex + 1} من {totalPages}
-            </div>
-          </footer>
-        </div>
-      ))}
+            <main>
+              {renderTable(chunk, startIndex)}
+              {isLastPage && renderSummaryAndTerms()}
+            </main>
+
+            <footer className="w-full mt-auto p-2 border-t-2 border-black text-center text-xs">
+              {resolvedSettings?.footerText && <p className="whitespace-pre-wrap">{resolvedSettings.footerText}</p>}
+               <div className="mt-1">
+                  صفحة {pageIndex + 1} من {totalPages}
+              </div>
+            </footer>
+          </div>
+        );
+      })}
     </>
   );
 }
+
+    
