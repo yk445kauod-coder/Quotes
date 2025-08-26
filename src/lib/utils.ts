@@ -1,3 +1,4 @@
+
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
@@ -32,12 +33,25 @@ const westernArabicToHindiMap: { [key: string]: string } = {
 
 /**
  * Replaces all Western Arabic numerals in a string with their Hindi counterparts.
+ * It also ensures there's a space between numbers and adjacent letters/symbols.
  * @param text The input string.
- * @returns The string with Hindi numerals.
+ * @returns The string with Hindi numerals and proper spacing.
  */
 export function formatTextWithHindiNumerals(text: string): string {
   if (typeof text !== 'string') return '';
-  return text.replace(/[0-9]/g, (match) => westernArabicToHindiMap[match]);
+  
+  // First, convert all western numerals to hindi numerals
+  let processedText = text.replace(/[0-9]/g, (match) => westernArabicToHindiMap[match]);
+
+  // Then, ensure there is a space between numbers and adjacent non-space characters.
+  // Handles cases like "text123text", "text123", "123text"
+  // It looks for a boundary between a number and a non-number character that isn't a space.
+  const hindiNumerals = '٠١٢٣٤٥٦٧٨٩';
+  const regex = new RegExp(`([${hindiNumerals}])([^${hindiNumerals}\\s])|([^${hindiNumerals}\\s])([${hindiNumerals}])`, 'g');
+  
+  processedText = processedText.replace(regex, '$1$3 $2$4');
+
+  return processedText;
 }
 
 
