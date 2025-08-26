@@ -82,26 +82,23 @@ export function DocumentPreview({ formData, settings: propSettings }: DocumentPr
       const LONG_TEXT_THRESHOLD = 200;
 
       while (currentIndex < items.length) {
-          // Determine the provisional chunk based on settings
-          let provisionalPageSize = resolvedSettings.itemsPerPage;
-          const provisionalChunk = items.slice(currentIndex, currentIndex + provisionalPageSize);
-
-          // Check if any item in the provisional chunk has long text
-          const hasLongText = provisionalChunk.some(
+          let pageSize = resolvedSettings.itemsPerPage;
+          
+          // Determine the range of items for the potential page
+          const potentialEndIndex = currentIndex + pageSize;
+          const potentialChunk = items.slice(currentIndex, potentialEndIndex);
+          
+          // Check if any item in this potential chunk has long text
+          const hasLongText = potentialChunk.some(
               item => (item.description || '').length > LONG_TEXT_THRESHOLD
           );
-          
-          let actualPageSize;
 
           if (hasLongText) {
               // Apply special sizing if long text is detected
-              actualPageSize = pageIndex === 0 ? 6 : 8;
-          } else {
-              // Otherwise, use the size from settings
-              actualPageSize = provisionalPageSize;
+              pageSize = pageIndex === 0 ? 6 : 8; // 6 for first page, 8 for subsequent
           }
 
-          const chunk = items.slice(currentIndex, currentIndex + actualPageSize);
+          const chunk = items.slice(currentIndex, currentIndex + pageSize);
           itemChunks.push(chunk);
           currentIndex += chunk.length;
           pageIndex++;
@@ -152,7 +149,7 @@ export function DocumentPreview({ formData, settings: propSettings }: DocumentPr
                   </>
               )}
           </div>
-          <div className="w-2/5 max-w-xs">
+          <div className="w-2/5 max-w-md">
               <table className="w-full border-collapse text-right">
                   <tbody>
                       <tr>
