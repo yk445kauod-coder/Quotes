@@ -87,7 +87,7 @@ export function DocumentPreview({ formData, settings: propSettings, columnVisibi
 
   const docTypeName = docType === 'quote' ? 'عرض سعر' : 'مقايسة';
   const date = new Date();
-  const today = `${formatNumberToHindi(date.getFullYear())}/${formatNumberToHindi(date.getMonth() + 1)}/${formatNumberToHindi(date.getDate())}`;
+  const today = `${formatNumberToHindi(date.getDate())}/${formatNumberToHindi(date.getMonth() + 1)}/${formatNumberToHindi(date.getFullYear())}`;
   const docIdText = docId ? formatTextWithHindiNumerals(docId) : '[سيتم إنشاؤه عند الحفظ]';
 
   // Smart Paging Logic:
@@ -96,11 +96,9 @@ export function DocumentPreview({ formData, settings: propSettings, columnVisibi
       let currentIndex = 0;
       let pageIndex = 0;
       const LONG_TEXT_THRESHOLD = 200;
-      const LONG_TEXT_COUNT_THRESHOLD = 15;
-
+      
       while (currentIndex < items.length) {
           let pageSize = resolvedSettings.itemsPerPage;
-          
           const potentialChunk = items.slice(currentIndex, currentIndex + pageSize);
 
           // Count items in the chunk with a description longer than the threshold
@@ -108,9 +106,8 @@ export function DocumentPreview({ formData, settings: propSettings, columnVisibi
             (item) => (item.description || '').length > LONG_TEXT_THRESHOLD
           ).length;
 
-          // Apply the new strict rule:
-          // If the number of long-text items is 15 or more, reduce page size.
-          if (longTextItemsCount >= LONG_TEXT_COUNT_THRESHOLD) {
+          // New Rule: if 15 or more items in the chunk have long descriptions, reduce page size.
+          if (longTextItemsCount >= 15) {
              if(pageIndex === 0) {
                  pageSize = 6;
              } else {
@@ -235,7 +232,7 @@ export function DocumentPreview({ formData, settings: propSettings, columnVisibi
               {isLastPage && renderSummaryAndTerms()}
             </main>
 
-            <footer className="w-full mt-auto p-2 border-t-2 border-black text-center text-xs">
+            <footer className="w-full mt-auto p-2 text-center text-xs">
               {resolvedSettings?.footerText && <p className="whitespace-pre-wrap">{formatTextWithHindiNumerals(resolvedSettings.footerText)}</p>}
                <div className="mt-1">
                   صفحة {formatNumberToHindi(pageIndex + 1)} من {formatNumberToHindi(totalPages)}
