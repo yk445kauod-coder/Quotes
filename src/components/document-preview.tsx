@@ -95,18 +95,21 @@ export function DocumentPreview({ formData, settings: propSettings, columnVisibi
       let currentIndex = 0;
       let pageIndex = 0;
       const LONG_TEXT_THRESHOLD = 200;
+      const LONG_TEXT_COUNT_THRESHOLD = 15;
 
       while (currentIndex < items.length) {
           let pageSize = resolvedSettings.itemsPerPage;
           
           const potentialChunk = items.slice(currentIndex, currentIndex + pageSize);
-          const hasLongText = potentialChunk.some(
-              (item) => (item.description || '').length > LONG_TEXT_THRESHOLD
-          );
-          
-          // Apply long text rule only if there are more than 3 items in total
-          // and at least one item in the current chunk has a long description.
-          if (items.length > 3 && hasLongText) {
+
+          // Count items in the chunk with a description longer than the threshold
+          const longTextItemsCount = potentialChunk.filter(
+            (item) => (item.description || '').length > LONG_TEXT_THRESHOLD
+          ).length;
+
+          // Apply the new strict rule:
+          // If the number of long-text items is 15 or more, reduce page size.
+          if (longTextItemsCount >= LONG_TEXT_COUNT_THRESHOLD) {
              if(pageIndex === 0) {
                  pageSize = 6;
              } else {
@@ -115,7 +118,6 @@ export function DocumentPreview({ formData, settings: propSettings, columnVisibi
           } else {
             pageSize = pageIndex === 0 ? resolvedSettings.itemsPerPage : resolvedSettings.itemsPerPage + 5; // Adjust for subsequent pages
           }
-
 
           const chunk = items.slice(currentIndex, currentIndex + pageSize);
           itemChunks.push(chunk);
@@ -134,7 +136,7 @@ export function DocumentPreview({ formData, settings: propSettings, columnVisibi
           <thead>
               <tr className="bg-gray-100">
                   {columnVisibility.showIndexColumn && <th className="border p-1 w-[5%] cell-center">م</th>}
-                  <th className="border p-1 w-[45%] cell-center">{docType === 'quote' ? 'البيان' : 'البند'}</th>
+                  <th className="border p-1 w-[45%] cell-center">البيان</th>
                   {columnVisibility.showUnitColumn && <th className="border p-1 w-[10%] cell-center">الوحدة</th>}
                   {columnVisibility.showQuantityColumn && <th className="border p-1 w-[10%] cell-center">{docType === 'quote' ? 'العدد' : 'الكمية'}</th>}
                   {columnVisibility.showPriceColumn && <th className="border p-1 w-[15%] cell-center">السعر</th>}
