@@ -152,9 +152,10 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
   
   // Auto-Save Logic
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isAutoSaving && isEditMode && existingDocument) {
-      interval = setInterval(async () => {
+    let intervalId: NodeJS.Timeout | null = null;
+  
+    const autoSave = async () => {
+      if (isEditMode && existingDocument) {
         try {
           const values = form.getValues();
           const docToUpdate: DocumentData = {
@@ -177,9 +178,18 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
             description: "حدث خطأ أثناء محاولة حفظ المستند تلقائياً.",
           });
         }
-      }, 5 * 60 * 1000); // 5 minutes
+      }
+    };
+  
+    if (isAutoSaving) {
+      intervalId = setInterval(autoSave, 5 * 60 * 1000); // 5 minutes
     }
-    return () => clearInterval(interval); // Cleanup on unmount or if auto-save is turned off
+  
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
   }, [isAutoSaving, isEditMode, existingDocument, form, subTotal, taxAmount, total, toast]);
 
 
