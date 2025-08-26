@@ -1,6 +1,6 @@
 "use client";
 
-import { getDocumentById, getSettings } from "@/lib/firebase-server";
+import { getDocumentById, getSettings } from "@/lib/firebase-client";
 import { CreateDocumentForm } from "@/components/create-document-form";
 import { notFound } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -51,6 +51,7 @@ export default function EditPage({ params }: EditPageProps) {
         <h1 className="text-3xl font-bold tracking-tight mb-6">
           جاري تحميل المستند...
         </h1>
+        {/* You could add skeleton loaders here */}
       </div>
     );
   }
