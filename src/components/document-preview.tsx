@@ -86,7 +86,8 @@ export function DocumentPreview({ formData, settings: propSettings, columnVisibi
   }
 
   const docTypeName = docType === 'quote' ? 'عرض سعر' : 'مقايسة';
-  const today = new Date().toLocaleDateString('ar-EG-u-nu-arab', { year: 'numeric', month: '2-digit', day: '2-digit' });
+  const date = new Date();
+  const today = `${formatNumberToHindi(date.getFullYear())}/${formatNumberToHindi(date.getMonth() + 1)}/${formatNumberToHindi(date.getDate())}`;
   const docIdText = docId ? formatTextWithHindiNumerals(docId) : '[سيتم إنشاؤه عند الحفظ]';
 
   // Smart Paging Logic:
