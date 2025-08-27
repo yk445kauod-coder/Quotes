@@ -48,16 +48,12 @@ import type { DocumentData, SettingsData } from "@/lib/types";
 import { deleteDocument, subscribeToDocuments, getSettings } from "@/lib/firebase-client";
 import { exportToPdf, exportToWord, exportToExcel } from "@/lib/export";
 import { AlertDialogTrigger } from "@radix-ui/react-alert-dialog";
-import { useLoading } from "@/context/loading-context";
+import { useLoading } from "@/hooks/use-loading";
 import { DocumentPreview } from "./document-preview";
 
 
-interface DocumentListProps {
-  initialDocuments: DocumentData[];
-}
-
-export function DocumentList({ initialDocuments }: DocumentListProps) {
-  const [documents, setDocuments] = useState<DocumentData[]>(initialDocuments);
+export function DocumentList() {
+  const [documents, setDocuments] = useState<DocumentData[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const [exportingDocId, setExportingDocId] = useState<string | null>(null);
@@ -80,11 +76,6 @@ export function DocumentList({ initialDocuments }: DocumentListProps) {
     
     // Fetch settings for export once
     getSettings().then(setSettingsForExport);
-
-    // Initial loading is complete because we have props from the server
-    if(initialDocuments.length > 0) {
-      setLoading(false);
-    }
 
     // Cleanup subscription on component unmount
     return () => unsubscribe();

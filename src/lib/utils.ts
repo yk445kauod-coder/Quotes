@@ -12,6 +12,7 @@ export function formatCurrency(amount: number, currency = "EGP") {
     currency,
     minimumFractionDigits: 2,
     numberingSystem: "arab", // Ensure Arabic-Indic numerals are used
+    notation: 'standard', // Add this to ensure consistency
   }).format(amount);
   
   // Replace the standard Arabic decimal separator (top comma) with a period (bottom dot).
@@ -58,4 +59,5 @@ export function formatTextWithHindiNumerals(text: string): string {
 
   return processedText;
 }
+
 
