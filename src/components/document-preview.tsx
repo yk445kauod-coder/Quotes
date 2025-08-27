@@ -7,9 +7,6 @@ import type { DocumentData, SettingsData, DocumentItem } from "@/lib/types";
 import React, { useState, useEffect } from "react";
 import { getSettings as getClientSettings } from "@/lib/firebase-client";
 import { Skeleton } from "./ui/skeleton";
-import { Resizable } from 'react-resizable';
-import 'react-resizable/css/styles.css';
-
 
 interface ColumnVisibility {
   showIndexColumn: boolean;
@@ -25,20 +22,6 @@ interface DocumentPreviewProps {
   columnVisibility?: ColumnVisibility;
 }
 
-const ResizableHeader = ({ onResize, width, children }: { onResize: (e: any, data: any) => void, width: number, children: React.ReactNode }) => {
-    return (
-        <Resizable
-            width={width}
-            height={0}
-            onResize={onResize}
-            draggableOpts={{ enableUserSelectHack: false }}
-        >
-            <th className="border p-1 cell-center" style={{ width: `${width}px` }}>{children}</th>
-        </Resizable>
-    );
-};
-
-
 export function DocumentPreview({ formData, settings: propSettings, columnVisibility: propColumnVisibility }: DocumentPreviewProps) {
   const [settings, setSettings] = useState<SettingsData | null | undefined>(propSettings);
   const [loading, setLoading] = useState(true);
@@ -51,24 +34,6 @@ export function DocumentPreview({ formData, settings: propSettings, columnVisibi
       showTotalColumn: true,
   };
   
-  const initialWidths = {
-    index: 50,
-    description: 350,
-    unit: 80,
-    quantity: 80,
-    price: 100,
-    total: 120,
-  };
-  
-  const [columnWidths, setColumnWidths] = useState(initialWidths);
-
-  const handleResize = (key: keyof typeof initialWidths) => (e: any, { size }: any) => {
-      setColumnWidths(prev => ({
-          ...prev,
-          [key]: size.width,
-      }));
-  };
-
   useEffect(() => {
     async function loadSettings() {
       if (propSettings === undefined) {
@@ -145,26 +110,26 @@ export function DocumentPreview({ formData, settings: propSettings, columnVisibi
   const totalPages = itemChunks.length;
 
   const renderTable = (chunk: DocumentItem[], startIndex: number) => (
-      <table className="w-full border-collapse text-right mt-4" style={{ tableLayout: 'fixed' }}>
+      <table className="w-full border-collapse text-right mt-4">
           <thead>
               <tr className="bg-gray-100">
-                  {columnVisibility.showIndexColumn && <ResizableHeader width={columnWidths.index} onResize={handleResize('index')}>م</ResizableHeader>}
-                  <ResizableHeader width={columnWidths.description} onResize={handleResize('description')}>البيان</ResizableHeader>
-                  {columnVisibility.showUnitColumn && <ResizableHeader width={columnWidths.unit} onResize={handleResize('unit')}>الوحدة</ResizableHeader>}
-                  {columnVisibility.showQuantityColumn && <ResizableHeader width={columnWidths.quantity} onResize={handleResize('quantity')}>{docType === 'quote' ? 'العدد' : 'الكمية'}</ResizableHeader>}
-                  {columnVisibility.showPriceColumn && <ResizableHeader width={columnWidths.price} onResize={handleResize('price')}>السعر</ResizableHeader>}
-                  {columnVisibility.showTotalColumn && <ResizableHeader width={columnWidths.total} onResize={handleResize('total')}>الإجمالي</ResizableHeader>}
+                  {columnVisibility.showIndexColumn && <th className="border p-1 cell-center w-[5%]">م</th>}
+                  <th className="border p-1 cell-center w-[45%]">البيان</th>
+                  {columnVisibility.showUnitColumn && <th className="border p-1 cell-center w-[10%]">الوحدة</th>}
+                  {columnVisibility.showQuantityColumn && <th className="border p-1 cell-center w-[10%]">{docType === 'quote' ? 'العدد' : 'الكمية'}</th>}
+                  {columnVisibility.showPriceColumn && <th className="border p-1 cell-center w-[15%]">السعر</th>}
+                  {columnVisibility.showTotalColumn && <th className="border p-1 cell-center w-[15%]">الإجمالي</th>}
               </tr>
           </thead>
           <tbody>
               {chunk.map((item, index) => (
                   <tr key={startIndex + index}>
-                      {columnVisibility.showIndexColumn && <td className="border p-1 cell-center" style={{ width: `${columnWidths.index}px` }}>{formatNumberToHindi(startIndex + index + 1)}</td>}
-                      <td className="border p-1 cell-top-right whitespace-pre-wrap" style={{ width: `${columnWidths.description}px` }}>{formatTextWithHindiNumerals(item.description || '')}</td>
-                      {columnVisibility.showUnitColumn && <td className="border p-1 cell-center" style={{ width: `${columnWidths.unit}px` }}>{item.unit}</td>}
-                      {columnVisibility.showQuantityColumn && <td className="border p-1 cell-center" style={{ width: `${columnWidths.quantity}px` }}>{formatNumberToHindi(item.quantity || 0)}</td>}
-                      {columnVisibility.showPriceColumn && <td className="border p-1 cell-center" style={{ width: `${columnWidths.price}px` }}>{formatCurrency(item.price || 0)}</td>}
-                      {columnVisibility.showTotalColumn && <td className="border p-1 cell-center" style={{ width: `${columnWidths.total}px` }}>{formatCurrency((item.quantity || 0) * (item.price || 0))}</td>}
+                      {columnVisibility.showIndexColumn && <td className="border p-1 cell-center">{formatNumberToHindi(startIndex + index + 1)}</td>}
+                      <td className="border p-1 cell-top-right whitespace-pre-wrap">{formatTextWithHindiNumerals(item.description || '')}</td>
+                      {columnVisibility.showUnitColumn && <td className="border p-1 cell-center">{item.unit}</td>}
+                      {columnVisibility.showQuantityColumn && <td className="border p-1 cell-center">{formatNumberToHindi(item.quantity || 0)}</td>}
+                      {columnVisibility.showPriceColumn && <td className="border p-1 cell-center">{formatCurrency(item.price || 0)}</td>}
+                      {columnVisibility.showTotalColumn && <td className="border p-1 cell-center">{formatCurrency((item.quantity || 0) * (item.price || 0))}</td>}
                   </tr>
               ))}
           </tbody>
