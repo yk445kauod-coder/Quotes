@@ -7,18 +7,37 @@ import type { DocumentData, SettingsData, DocumentItem } from "@/lib/types";
 import React, { useState, useEffect } from "react";
 import { getSettings as getClientSettings } from "@/lib/firebase-client";
 import { Skeleton } from "./ui/skeleton";
+import { Resizable } from 'react-resizable';
+import 'react-resizable/css/styles.css';
+
+
+interface ColumnVisibility {
+  showIndexColumn: boolean;
+  showUnitColumn: boolean;
+  showQuantityColumn: boolean;
+  showPriceColumn: boolean;
+  showTotalColumn: boolean;
+}
 
 interface DocumentPreviewProps {
   formData: Partial<DocumentData>;
   settings?: SettingsData | null;
-  columnVisibility?: {
-    showIndexColumn: boolean;
-    showUnitColumn: boolean;
-    showQuantityColumn: boolean;
-    showPriceColumn: boolean;
-    showTotalColumn: boolean;
-  };
+  columnVisibility?: ColumnVisibility;
 }
+
+const ResizableHeader = ({ onResize, width, children }: { onResize: (e: any, data: any) => void, width: number, children: React.ReactNode }) => {
+    return (
+        <Resizable
+            width={width}
+            height={0}
+            onResize={onResize}
+            draggableOpts={{ enableUserSelectHack: false }}
+        >
+            <th className="border p-1 cell-center" style={{ width: `${width}px` }}>{children}</th>
+        </Resizable>
+    );
+};
+
 
 export function DocumentPreview({ formData, settings: propSettings, columnVisibility: propColumnVisibility }: DocumentPreviewProps) {
   const [settings, setSettings] = useState<SettingsData | null | undefined>(propSettings);
@@ -30,6 +49,24 @@ export function DocumentPreview({ formData, settings: propSettings, columnVisibi
       showQuantityColumn: true,
       showPriceColumn: true,
       showTotalColumn: true,
+  };
+  
+  const initialWidths = {
+    index: 50,
+    description: 350,
+    unit: 80,
+    quantity: 80,
+    price: 100,
+    total: 120,
+  };
+  
+  const [columnWidths, setColumnWidths] = useState(initialWidths);
+
+  const handleResize = (key: keyof typeof initialWidths) => (e: any, { size }: any) => {
+      setColumnWidths(prev => ({
+          ...prev,
+          [key]: size.width,
+      }));
   };
 
   useEffect(() => {
@@ -95,33 +132,10 @@ export function DocumentPreview({ formData, settings: propSettings, columnVisibi
   const itemChunks: DocumentItem[][] = [];
   if (items && items.length > 0) {
       let currentIndex = 0;
-      let pageIndex = 0;
-      const LONG_TEXT_THRESHOLD = 200;
-      
       while (currentIndex < items.length) {
-          let pageSize = resolvedSettings.itemsPerPage;
-          const potentialChunk = items.slice(currentIndex, currentIndex + pageSize);
-
-          // Count items in the chunk with a description longer than the threshold
-          const longTextItemsCount = potentialChunk.filter(
-            (item) => (item.description || '').length > LONG_TEXT_THRESHOLD
-          ).length;
-
-          // New Rule: if 15 or more items in the chunk have long descriptions, reduce page size.
-          if (longTextItemsCount >= 15) {
-             if(pageIndex === 0) {
-                 pageSize = 6;
-             } else {
-                 pageSize = 8;
-             }
-          } else {
-            pageSize = pageIndex === 0 ? resolvedSettings.itemsPerPage : resolvedSettings.itemsPerPage + 5; // Adjust for subsequent pages
-          }
-
-          const chunk = items.slice(currentIndex, currentIndex + pageSize);
+          const chunk = items.slice(currentIndex, currentIndex + resolvedSettings.itemsPerPage);
           itemChunks.push(chunk);
           currentIndex += chunk.length;
-          pageIndex++;
       }
   } else {
       // Ensure there is at least one page even if there are no items
@@ -131,26 +145,26 @@ export function DocumentPreview({ formData, settings: propSettings, columnVisibi
   const totalPages = itemChunks.length;
 
   const renderTable = (chunk: DocumentItem[], startIndex: number) => (
-      <table className="w-full border-collapse text-right mt-4">
+      <table className="w-full border-collapse text-right mt-4" style={{ tableLayout: 'fixed' }}>
           <thead>
               <tr className="bg-gray-100">
-                  {columnVisibility.showIndexColumn && <th className="border p-1 w-[5%] cell-center">م</th>}
-                  <th className="border p-1 w-[45%] cell-center">البيان</th>
-                  {columnVisibility.showUnitColumn && <th className="border p-1 w-[10%] cell-center">الوحدة</th>}
-                  {columnVisibility.showQuantityColumn && <th className="border p-1 w-[10%] cell-center">{docType === 'quote' ? 'العدد' : 'الكمية'}</th>}
-                  {columnVisibility.showPriceColumn && <th className="border p-1 w-[15%] cell-center">السعر</th>}
-                  {columnVisibility.showTotalColumn && <th className="border p-1 w-[15%] cell-center">الإجمالي</th>}
+                  {columnVisibility.showIndexColumn && <ResizableHeader width={columnWidths.index} onResize={handleResize('index')}>م</ResizableHeader>}
+                  <ResizableHeader width={columnWidths.description} onResize={handleResize('description')}>البيان</ResizableHeader>
+                  {columnVisibility.showUnitColumn && <ResizableHeader width={columnWidths.unit} onResize={handleResize('unit')}>الوحدة</ResizableHeader>}
+                  {columnVisibility.showQuantityColumn && <ResizableHeader width={columnWidths.quantity} onResize={handleResize('quantity')}>{docType === 'quote' ? 'العدد' : 'الكمية'}</ResizableHeader>}
+                  {columnVisibility.showPriceColumn && <ResizableHeader width={columnWidths.price} onResize={handleResize('price')}>السعر</ResizableHeader>}
+                  {columnVisibility.showTotalColumn && <ResizableHeader width={columnWidths.total} onResize={handleResize('total')}>الإجمالي</ResizableHeader>}
               </tr>
           </thead>
           <tbody>
               {chunk.map((item, index) => (
                   <tr key={startIndex + index}>
-                      {columnVisibility.showIndexColumn && <td className="border p-1 cell-center">{formatNumberToHindi(startIndex + index + 1)}</td>}
-                      <td className="border p-1 cell-top-right whitespace-pre-wrap">{formatTextWithHindiNumerals(item.description || '')}</td>
-                      {columnVisibility.showUnitColumn && <td className="border p-1 cell-center">{item.unit}</td>}
-                      {columnVisibility.showQuantityColumn && <td className="border p-1 cell-center">{formatNumberToHindi(item.quantity || 0)}</td>}
-                      {columnVisibility.showPriceColumn && <td className="border p-1 cell-center">{formatCurrency(item.price || 0)}</td>}
-                      {columnVisibility.showTotalColumn && <td className="border p-1 cell-center">{formatCurrency((item.quantity || 0) * (item.price || 0))}</td>}
+                      {columnVisibility.showIndexColumn && <td className="border p-1 cell-center" style={{ width: `${columnWidths.index}px` }}>{formatNumberToHindi(startIndex + index + 1)}</td>}
+                      <td className="border p-1 cell-top-right whitespace-pre-wrap" style={{ width: `${columnWidths.description}px` }}>{formatTextWithHindiNumerals(item.description || '')}</td>
+                      {columnVisibility.showUnitColumn && <td className="border p-1 cell-center" style={{ width: `${columnWidths.unit}px` }}>{item.unit}</td>}
+                      {columnVisibility.showQuantityColumn && <td className="border p-1 cell-center" style={{ width: `${columnWidths.quantity}px` }}>{formatNumberToHindi(item.quantity || 0)}</td>}
+                      {columnVisibility.showPriceColumn && <td className="border p-1 cell-center" style={{ width: `${columnWidths.price}px` }}>{formatCurrency(item.price || 0)}</td>}
+                      {columnVisibility.showTotalColumn && <td className="border p-1 cell-center" style={{ width: `${columnWidths.total}px` }}>{formatCurrency((item.quantity || 0) * (item.price || 0))}</td>}
                   </tr>
               ))}
           </tbody>
@@ -179,8 +193,8 @@ export function DocumentPreview({ formData, settings: propSettings, columnVisibi
                       <tr>
                           <td className="border p-1 font-bold cell-center">
                             <span>{formatTextWithHindiNumerals('الضريبة')}</span>
-                            <span>&nbsp;</span>
-                            <span dir="ltr">{formatNumberToHindi(14)}%</span>
+                            &nbsp;
+                            <span dir="ltr">14%</span>
                           </td>
                           <td className="border p-1 cell-center">{formatCurrency(taxAmount)}</td>
                       </tr>
