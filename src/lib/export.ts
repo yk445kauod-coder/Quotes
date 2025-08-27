@@ -63,8 +63,16 @@ export async function exportToWord(element: HTMLElement, fileName:string) {
         </xml>
         <![endif]-->
         <style>
+            /* Explicitly import the Noto Sans Arabic font */
+            @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@100..900&display=swap');
+            
             /* All the CSS from the document is injected here */
             ${styles}
+
+            body {
+              font-family: 'Noto Sans Arabic', sans-serif;
+            }
+            
             @page {
                 size: A4;
                 margin: 10mm 15mm 15mm 15mm;
@@ -138,34 +146,27 @@ export async function exportToPdf(element: HTMLElement, fileName: string) {
 
     const pages = element.querySelectorAll<HTMLElement>('.a4-page');
     const pdfWidth = pdf.internal.pageSize.getWidth();
-    // A4 height is not used directly for scaling to avoid distortion, but good to have
-    // const pdfHeight = pdf.internal.pageSize.getHeight();
 
     for (let i = 0; i < pages.length; i++) {
         const page = pages[i];
         
         const canvas = await html2canvas(page, {
-            scale: 2, // A scale of 2 is a good balance of quality and performance
+            scale: 4, 
             useCORS: true,
             logging: false,
             allowTaint: true,
         });
 
-        const imgData = canvas.toDataURL('image/jpeg', 0.98); // High quality JPEG
+        const imgData = canvas.toDataURL('image/jpeg', 0.98);
         
-        // Calculate the aspect ratio of the captured image
         const imgProps = pdf.getImageProperties(imgData);
         const aspectRatio = imgProps.width / imgProps.height;
-        
-        // Calculate the height of the image in the PDF to maintain aspect ratio
         const finalHeight = pdfWidth / aspectRatio;
 
         if (i > 0) {
             pdf.addPage();
         }
         
-        // Add the image to the PDF.
-        // It will be scaled to fit the full width of the page, and the height will adjust accordingly.
         pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, finalHeight);
     }
 
