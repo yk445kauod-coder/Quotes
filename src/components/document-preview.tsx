@@ -173,19 +173,19 @@ export function DocumentPreview({ formData, settings: propSettings, columnVisibi
               <table className="w-full border-collapse text-right">
                   <tbody>
                       <tr>
-                          <td className="border p-1 font-bold cell-center">المجموع</td>
+                          <td className="border p-1 font-bold cell-center">{formatTextWithHindiNumerals('المجموع')}</td>
                           <td className="border p-1 cell-center">{formatCurrency(subTotal)}</td>
                       </tr>
                       <tr>
                           <td className="border p-1 font-bold cell-center">
-                            <span>الضريبة</span>
+                            <span>{formatTextWithHindiNumerals('الضريبة')}</span>
                             <span>&nbsp;</span>
-                            <span>{formatNumberToHindi(14)}%</span>
+                            <span>{formatTextWithHindiNumerals('14%')}</span>
                           </td>
                           <td className="border p-1 cell-center">{formatCurrency(taxAmount)}</td>
                       </tr>
                       <tr>
-                          <td className="border p-1 font-bold bg-gray-100 cell-center">الإجمالي الكلي</td>
+                          <td className="border p-1 font-bold bg-gray-100 cell-center">{formatTextWithHindiNumerals('الإجمالي الكلي')}</td>
                           <td className="border p-1 font-bold bg-gray-100 cell-center">{formatCurrency(total)}</td>
                       </tr>
                   </tbody>
