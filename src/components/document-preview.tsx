@@ -225,8 +225,8 @@ export function DocumentPreview({ formData, settings: propSettings, columnVisibi
                           <span>{docTypeName} رقم: {docIdText}</span>
                       </div>
                       <div className="mb-2 text-sm">
-                          <p><span className="font-bold">السادة/</span> {clientName}</p>
-                          <p><span className="font-bold">الموضوع:</span> {subject}</p>
+                          <p><span className="font-bold">السادة/</span> <span className="whitespace-pre-wrap">{clientName}</span></p>
+                          <p><span className="font-bold">الموضوع:</span> <span>{subject}</span></p>
                       </div>
                   </>
                )}

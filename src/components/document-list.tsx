@@ -57,7 +57,7 @@ interface DocumentListProps {
 
 export function DocumentList({ initialDocuments }: DocumentListProps) {
   const [documents, setDocuments] = useState<DocumentData[]>(initialDocuments);
-  const [loading, setLoading] = useState(false); // No initial loading
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const [exportingDocId, setExportingDocId] = useState<string | null>(null);
   const router = useRouter();
@@ -74,7 +74,7 @@ export function DocumentList({ initialDocuments }: DocumentListProps) {
     // Subscribe to real-time updates after the initial server render
     const unsubscribe = subscribeToDocuments((docs) => {
       setDocuments(docs);
-      hideLoading(); // Hide loading indicator once data is loaded/updated
+      setLoading(false); // Set loading to false once we have live data
     });
     
     // Fetch settings for export once
@@ -82,7 +82,7 @@ export function DocumentList({ initialDocuments }: DocumentListProps) {
 
     // Cleanup subscription on component unmount
     return () => unsubscribe();
-  }, [hideLoading]);
+  }, []);
   
   const handleEdit = (id: string) => {
     showLoading();
@@ -119,6 +119,7 @@ export function DocumentList({ initialDocuments }: DocumentListProps) {
         if (format === 'excel') {
             exportToExcel(doc.items, doc.docId);
             toast({ title: "تم التصدير", description: `تم تصدير المستند كـ ${format.toUpperCase()}.` });
+            setExportingDocId(null);
             return;
         }
 
@@ -184,7 +185,7 @@ export function DocumentList({ initialDocuments }: DocumentListProps) {
           </div>
         </CardHeader>
         <CardContent>
-          {loading ? (
+          {loading && documents.length === 0 ? (
               <div className="flex justify-center items-center py-8">
                   <Loader2 className="h-8 w-8 animate-spin" />
               </div>

@@ -98,6 +98,7 @@
         background-color: #f2f2f2;
         font-weight: bold;
     }
+    /* Only apply pre-wrap to item descriptions that need it */
     .a4-page .whitespace-pre-wrap {
         white-space: pre-wrap;
         word-wrap: break-word;
@@ -143,7 +144,7 @@
         box-shadow: none !important;
         border: none !important;
         page-break-after: always;
-        color: #000 !important;
+        color: #000 !important; /* Force black color for PDF */
     }
     
     .a4-page:last-child {

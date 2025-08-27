@@ -2,7 +2,6 @@
 "use client";
 
 import type { DocumentItem } from "./types";
-// We will import html2pdf.js dynamically to ensure it only runs on the client-side.
 
 /**
  * Converts an array of items to a CSV string.
@@ -19,7 +18,7 @@ function convertToCSV(items: DocumentItem[]): string {
 
 /**
  * Exports a given HTML element to a PDF file using html2pdf.js.
- * This method ensures high fidelity by acting like a high-resolution "screenshot".
+ * This method is configured to act like a high-resolution "screenshot" to ensure fidelity.
  */
 export async function exportToPdf(element?: HTMLElement, fileName?: string) {
     const targetElement = element || document.getElementById('printable-area');
@@ -35,18 +34,16 @@ export async function exportToPdf(element?: HTMLElement, fileName?: string) {
     const options = {
       margin: 0,
       filename: docName,
-      image: { type: 'jpeg', quality: 0.98 },
+      image: { type: 'jpeg', quality: 1.0 }, // Use highest quality JPEG
       html2canvas: { 
         scale: 4, // Higher scale for better resolution and clarity
         useCORS: true, // Important for external images/fonts
         logging: false,
-        onrendered: (canvas: { toDataURL: (arg0: string) => any; }) => {
-            // Optional: you can get the base64 image data here if needed
-            const imgData = canvas.toDataURL('image/png');
-        }
+        letterRendering: true,
+        allowTaint: true,
       },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      // The library will handle page breaks automatically based on the content flow.
+      pagebreak: { mode: ['css', 'legacy'] } // Ensures CSS page-break rules are respected
     };
 
     return html2pdf().from(targetElement).set(options).save();
