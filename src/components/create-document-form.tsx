@@ -48,7 +48,7 @@ import { formatCurrency } from "@/lib/utils";
 import type { DocumentData, SettingsData } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import React, { useState, useEffect } from "react";
-import { exportToPdf, exportToWord, exportToExcel } from "@/lib/export";
+import { exportToWord, exportToExcel } from "@/lib/export";
 import { Textarea } from "./ui/textarea";
 import { useLoading } from "@/context/loading-context";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
@@ -258,16 +258,49 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
   }
   
   const handlePdfExport = async () => {
-      setIsExporting(true);
-      try {
-        await exportToPdf();
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : `فشل تصدير الملف كـ PDF`;
-        toast({ variant: "destructive", title: "خطأ في التصدير", description: errorMessage });
-      } finally {
-        setIsExporting(false);
+    setIsExporting(true);
+    const docId = currentDocumentData.docId || 'document';
+    try {
+      const element = document.getElementById('printable-area');
+      if (!element) {
+        throw new Error("Preview element not found.");
       }
-  }
+      
+      const response = await fetch('/api/export-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ htmlContent: element.outerHTML }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate PDF on server.');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${docId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "تم التصدير بنجاح",
+        description: `جاري تحميل ملف ${docId}.pdf`,
+      });
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : `فشل تصدير الملف كـ PDF`;
+      toast({ variant: "destructive", title: "خطأ في التصدير", description: errorMessage });
+    } finally {
+      setIsExporting(false);
+    }
+};
 
   const handleExport = async (format: 'word' | 'excel') => {
       setIsExporting(true);
@@ -320,7 +353,7 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
 
   return (
     <>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start no-print">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         <div>
           <Card>
             <CardHeader>
@@ -572,13 +605,13 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
         </div>
 
         <div className="sticky top-20">
-          <Card className="no-print">
+          <Card>
             <CardHeader>
               <CardTitle>معاينة المستند</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="w-full bg-gray-100 p-8 rounded-lg shadow-inner overflow-auto max-h-[80vh]">
-                  <div id="printable-area-wrapper">
+                  <div id="printable-area">
                     <DocumentPreview 
                         formData={currentDocumentData} 
                         settings={defaultSettings}
@@ -589,17 +622,6 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
             </CardContent>
           </Card>
         </div>
-      </div>
-      
-      {/* Hidden container for printing only */}
-      <div className="hidden print-only">
-          <div id="printable-area">
-              <DocumentPreview 
-                  formData={currentDocumentData} 
-                  settings={defaultSettings}
-                  columnVisibility={columnVisibility}
-              />
-          </div>
       </div>
     </>
   );

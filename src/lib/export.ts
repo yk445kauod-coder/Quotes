@@ -1,6 +1,5 @@
 
 "use client";
-
 import type { DocumentItem } from "./types";
 
 /**
@@ -15,19 +14,6 @@ function convertToCSV(items: DocumentItem[]): string {
   });
   return [headers.join(','), ...rows].join('\n');
 }
-
-/**
- * Triggers the browser's print dialog to save the document as a PDF.
- * It relies on @media print CSS rules to format the output correctly.
- */
-export async function exportToPdf() {
-    if (typeof window !== 'undefined') {
-        window.print();
-    } else {
-        console.error("Print function can only be called on the client-side.");
-    }
-}
-
 
 /**
  * Exports a given HTML element to a Word (.doc) file by wrapping it in the necessary HTML structure.
@@ -125,4 +111,11 @@ export function exportToExcel(items: DocumentItem[], fileName: string) {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(link.href);
+}
+
+// PDF export is now handled by the API route
+export async function exportToPdf() {
+    // This function is now a placeholder or can be removed
+    // The logic is in create-document-form.tsx which calls the API route
+    console.log("PDF export is handled by the API route '/api/export-pdf'");
 }
