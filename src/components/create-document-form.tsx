@@ -54,6 +54,7 @@ import { useLoading } from "@/context/loading-context";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import { Switch } from "./ui/switch";
 import { Label } from "./ui/label";
+import html2pdf from "html2pdf.js";
 
 
 const formSchema = z.object({
@@ -259,46 +260,47 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
   
   const handlePdfExport = async () => {
     setIsExporting(true);
+    showLoading();
     const docId = currentDocumentData.docId || 'document';
-    try {
-      const element = document.getElementById('printable-area');
-      if (!element) {
-        throw new Error("Preview element not found.");
-      }
-      
-      const response = await fetch('/api/export-pdf', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+    const element = document.getElementById('printable-area');
+
+    if (!element) {
+        toast({ variant: "destructive", title: "خطأ", description: "لم يتم العثور على منطقة المعاينة." });
+        setIsExporting(false);
+        hideLoading();
+        return;
+    }
+
+    const options = {
+        margin: [10, 15, 15, 15], // [top, left, bottom, right] in mm
+        filename: `${docId}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 4, // Higher scale for better quality
+          logging: false, 
+          useCORS: true,
+          scrollX: 0,
+          scrollY: 0,
+          windowWidth: element.scrollWidth,
+          windowHeight: element.scrollHeight,
         },
-        body: JSON.stringify({ htmlContent: element.outerHTML }),
-      });
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        // This helps with page breaks
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    };
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to generate PDF on server.');
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${docId}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-
-      toast({
-        title: "تم التصدير بنجاح",
-        description: `جاري تحميل ملف ${docId}.pdf`,
-      });
-
+    try {
+        await html2pdf().from(element).set(options).save();
+        toast({
+            title: "تم التصدير بنجاح",
+            description: `جاري تحميل ملف ${docId}.pdf`,
+        });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : `فشل تصدير الملف كـ PDF`;
-      toast({ variant: "destructive", title: "خطأ في التصدير", description: errorMessage });
+        const errorMessage = error instanceof Error ? error.message : `فشل تصدير الملف كـ PDF`;
+        toast({ variant: "destructive", title: "خطأ في التصدير", description: errorMessage });
     } finally {
-      setIsExporting(false);
+        setIsExporting(false);
+        hideLoading();
     }
 };
 
@@ -354,7 +356,7 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
   return (
     <>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-        <div>
+        <div className="no-print">
           <Card>
             <CardHeader>
               <div className="flex justify-between items-center">
