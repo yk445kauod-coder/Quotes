@@ -121,56 +121,49 @@ export function exportToExcel(items: DocumentItem[], fileName: string) {
 
 
 /**
- * Exports a given HTML element to a PDF file with high fidelity.
- * @param element The HTML element to capture.
+ * Exports a given HTML element to a PDF file with high fidelity, handling multiple pages correctly.
+ * @param element The container element holding all the .a4-page elements to capture.
  * @param fileName The name for the downloaded PDF file.
  */
 export async function exportToPdf(element: HTMLElement, fileName: string) {
     if (!element) {
         throw new Error("Element to export not found.");
     }
-    
-    // 1. Use html2canvas to capture the element with high resolution
-    const canvas = await html2canvas(element, {
-        scale: 4, // Higher scale for better quality
-        useCORS: true,
-        logging: false,
-        allowTaint: true,
-        scrollX: -window.scrollX,
-        scrollY: -window.scrollY,
-        windowWidth: document.documentElement.offsetWidth,
-        windowHeight: document.documentElement.offsetHeight,
-    });
 
-    const imgData = canvas.toDataURL('image/jpeg', 0.98); // Use JPEG for smaller size with high quality
-
-    // 2. Use jsPDF to create the PDF document
     const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
         format: 'a4',
     });
 
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const canvasWidth = canvas.width;
-    const canvasHeight = canvas.height;
-    const canvasAspectRatio = canvasWidth / canvasHeight;
-    const imgHeight = pdfWidth / canvasAspectRatio;
+    const pages = element.querySelectorAll<HTMLElement>('.a4-page');
 
-    // Handle multi-page content
-    let heightLeft = imgHeight;
-    let position = 0;
+    for (let i = 0; i < pages.length; i++) {
+        const page = pages[i];
+        
+        const canvas = await html2canvas(page, {
+            scale: 4, // High resolution capture
+            useCORS: true,
+            logging: false,
+            allowTaint: true,
+            scrollX: 0, // Ensure no scrolling interference
+            scrollY: 0,
+            windowWidth: page.scrollWidth,
+            windowHeight: page.scrollHeight,
+        });
 
-    pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, imgHeight);
-    heightLeft -= pdf.internal.pageSize.getHeight();
+        const imgData = canvas.toDataURL('image/jpeg', 0.98); // High quality JPEG
 
-    while (heightLeft > 0) {
-        position = -heightLeft; // Adjust position for subsequent pages
-        pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeight);
-        heightLeft -= pdf.internal.pageSize.getHeight();
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+
+        if (i > 0) {
+            pdf.addPage();
+        }
+        
+        // Add the image to the PDF, letting jsPDF handle scaling to fit the page.
+        pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
     }
 
-    // 3. Save the PDF
     pdf.save(`${fileName}.pdf`);
 }

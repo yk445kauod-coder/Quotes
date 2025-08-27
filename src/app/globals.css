@@ -73,7 +73,7 @@
 @layer components {
     .a4-page {
         @apply bg-white text-black font-body text-sm shadow-lg mx-auto mb-4;
-        width: 210mm;
+        width: 210mm; /* Strict A4 width */
         height: 297mm; /* Strict A4 height */
         padding: 10mm 15mm 15mm 15mm; 
         display: flex;
