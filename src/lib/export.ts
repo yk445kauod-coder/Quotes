@@ -137,6 +137,8 @@ export async function exportToPdf(element: HTMLElement, fileName: string) {
     });
 
     const pages = element.querySelectorAll<HTMLElement>('.a4-page');
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
 
     for (let i = 0; i < pages.length; i++) {
         const page = pages[i];
@@ -146,23 +148,29 @@ export async function exportToPdf(element: HTMLElement, fileName: string) {
             useCORS: true,
             logging: false,
             allowTaint: true,
-            scrollX: 0, // Ensure no scrolling interference
-            scrollY: 0,
-            windowWidth: page.scrollWidth,
-            windowHeight: page.scrollHeight,
         });
 
         const imgData = canvas.toDataURL('image/jpeg', 0.98); // High quality JPEG
+        const imgProps = pdf.getImageProperties(imgData);
 
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
+        // Calculate the aspect ratio to fit the image correctly onto the A4 page
+        const aspectRatio = imgProps.width / imgProps.height;
+        let finalWidth = pdfWidth;
+        let finalHeight = finalWidth / aspectRatio;
+
+        // If the calculated height is greater than the page height, it means the content is taller than it is wide,
+        // so we should base the final dimensions on the page height instead.
+        if (finalHeight > pdfHeight) {
+            finalHeight = pdfHeight;
+            finalWidth = finalHeight * aspectRatio;
+        }
 
         if (i > 0) {
             pdf.addPage();
         }
         
         // Add the image to the PDF, letting jsPDF handle scaling to fit the page.
-        pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+        pdf.addImage(imgData, 'JPEG', 0, 0, finalWidth, finalHeight);
     }
 
     pdf.save(`${fileName}.pdf`);
