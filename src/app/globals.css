@@ -74,7 +74,7 @@
     .a4-page {
         @apply bg-white text-black font-body text-sm shadow-lg mx-auto mb-4;
         width: 210mm;
-        min-height: calc(297mm - 1px); /* A4 height minus 1px as requested */
+        min-height: calc(297mm - 1px);
         padding: 10mm 15mm 15mm 15mm; 
         display: flex;
         flex-direction: column;
@@ -124,19 +124,26 @@
 
 /* Styles for PDF/Print Export */
 @media print {
-    body {
-        margin: 0 !important;
-        padding: 0 !important;
-        background: #fff;
+    body * {
+        visibility: hidden;
     }
 
     .no-print {
         display: none !important;
     }
     
+    #printable-area, #printable-area * {
+      visibility: visible;
+    }
+
     #printable-area {
-      display: block;
-      margin: 0 auto;
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: auto;
+      margin: 0 !important;
+      padding: 0 !important;
     }
 
     .a4-page {
@@ -145,6 +152,9 @@
         border: none !important;
         page-break-after: always;
         color: #000 !important; /* Force black color for PDF */
+        width: 100% !important;
+        height: 297mm !important; /* Strict height for printing */
+        min-height: 0 !important;
     }
     
     .a4-page:last-child {

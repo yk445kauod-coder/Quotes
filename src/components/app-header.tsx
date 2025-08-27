@@ -6,7 +6,7 @@ import { LoadingLink } from "./loading-link";
 
 export function AppHeader() {
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 no-print">
       <div className="container flex h-16 max-w-screen-2xl items-center">
         <LoadingLink href="/" className="mr-6 flex items-center space-x-2">
           <FileText className="h-6 w-6" />

@@ -17,36 +17,15 @@ function convertToCSV(items: DocumentItem[]): string {
 }
 
 /**
- * Exports a given HTML element to a PDF file using html2pdf.js.
- * This method is configured to act like a high-resolution "screenshot" to ensure fidelity.
+ * Triggers the browser's print dialog to save the document as a PDF.
+ * It relies on @media print CSS rules to format the output correctly.
  */
-export async function exportToPdf(element?: HTMLElement, fileName?: string) {
-    const targetElement = element || document.getElementById('printable-area');
-    const docName = fileName || `document_${new Date().toISOString().slice(0, 10)}.pdf`;
-
-    if (!targetElement) {
-        throw new Error("Printable area not found.");
+export async function exportToPdf() {
+    if (typeof window !== 'undefined') {
+        window.print();
+    } else {
+        console.error("Print function can only be called on the client-side.");
     }
-
-    // Dynamically import html2pdf.js only on the client-side
-    const html2pdf = (await import('html2pdf.js')).default;
-    
-    const options = {
-      margin: 0,
-      filename: docName,
-      image: { type: 'jpeg', quality: 1.0 }, // Use highest quality JPEG
-      html2canvas: { 
-        scale: 4, // Higher scale for better resolution and clarity
-        useCORS: true, // Important for external images/fonts
-        logging: false,
-        letterRendering: true,
-        allowTaint: true,
-      },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      pagebreak: { mode: ['css', 'legacy'] } // Ensures CSS page-break rules are respected
-    };
-
-    return html2pdf().from(targetElement).set(options).save();
 }
 
 
