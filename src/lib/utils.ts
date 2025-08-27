@@ -7,12 +7,15 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatCurrency(amount: number, currency = "EGP") {
-  return new Intl.NumberFormat("ar-EG", {
+  const formatted = new Intl.NumberFormat("ar-EG", {
     style: "currency",
     currency,
     minimumFractionDigits: 2,
     numberingSystem: "arab", // Ensure Arabic-Indic numerals are used
   }).format(amount);
+  
+  // Replace the standard Arabic decimal separator (top comma) with a period (bottom dot).
+  return formatted.replace(/٫/g, '.');
 }
 
 /**
@@ -55,3 +58,4 @@ export function formatTextWithHindiNumerals(text: string): string {
 
   return processedText;
 }
+
