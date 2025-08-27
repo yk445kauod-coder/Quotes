@@ -48,7 +48,7 @@ import type { DocumentData, SettingsData } from "@/lib/types";
 import { deleteDocument, subscribeToDocuments, getSettings } from "@/lib/firebase-client";
 import { exportToPdf, exportToWord, exportToExcel } from "@/lib/export";
 import { AlertDialogTrigger } from "@radix-ui/react-alert-dialog";
-import { useLoading } from "@/hooks/use-loading";
+import { useLoading } from "@/context/loading-context";
 import { DocumentPreview } from "./document-preview";
 
 
