@@ -136,10 +136,10 @@ export async function exportToPdf(element: HTMLElement, fileName: string) {
         useCORS: true,
         logging: false,
         allowTaint: true,
-        scrollX: 0,
-        scrollY: 0,
-        windowWidth: element.scrollWidth,
-        windowHeight: element.scrollHeight,
+        scrollX: -window.scrollX,
+        scrollY: -window.scrollY,
+        windowWidth: document.documentElement.offsetWidth,
+        windowHeight: document.documentElement.offsetHeight,
     });
 
     const imgData = canvas.toDataURL('image/jpeg', 0.98); // Use JPEG for smaller size with high quality
@@ -152,27 +152,23 @@ export async function exportToPdf(element: HTMLElement, fileName: string) {
     });
 
     const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
     const canvasWidth = canvas.width;
     const canvasHeight = canvas.height;
     const canvasAspectRatio = canvasWidth / canvasHeight;
-    const pageAspectRatio = pdfWidth / pdfHeight;
-
-    let imgWidth = pdfWidth;
-    let imgHeight = pdfWidth / canvasAspectRatio;
+    const imgHeight = pdfWidth / canvasAspectRatio;
 
     // Handle multi-page content
     let heightLeft = imgHeight;
     let position = 0;
 
-    pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
-    heightLeft -= pdfHeight;
+    pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, imgHeight);
+    heightLeft -= pdf.internal.pageSize.getHeight();
 
     while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
+        position = -heightLeft; // Adjust position for subsequent pages
         pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pdfHeight;
+        pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeight);
+        heightLeft -= pdf.internal.pageSize.getHeight();
     }
 
     // 3. Save the PDF
