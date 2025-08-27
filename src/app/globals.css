@@ -74,7 +74,7 @@
     .a4-page {
         @apply bg-white text-black font-body text-sm shadow-lg mx-auto mb-4;
         width: 210mm;
-        min-height: calc(297mm - 1px);
+        height: 297mm; /* Strict A4 height */
         padding: 10mm 15mm 15mm 15mm; 
         display: flex;
         flex-direction: column;
