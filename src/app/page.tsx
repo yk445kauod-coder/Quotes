@@ -9,8 +9,7 @@ import { LoadingLink } from "@/components/loading-link";
 export const revalidate = 0; // Revalidate on every request
 
 export default async function DashboardPage() {
-  // We still fetch initial documents on the server for the initial page load,
-  // but we pass it to the client component in a way that is more robust.
+  // Fetch initial documents on the server for the initial page load.
   const documents: DocumentData[] = await getDocuments();
 
   return (
@@ -29,6 +28,7 @@ export default async function DashboardPage() {
         </div>
       </div>
 
+      {/* Pass the server-fetched documents to the client component */}
       <DocumentList initialDocuments={documents} />
       
     </div>

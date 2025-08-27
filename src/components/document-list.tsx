@@ -74,11 +74,16 @@ export function DocumentList({ initialDocuments }: DocumentListProps) {
     // Subscribe to real-time updates after the initial server render
     const unsubscribe = subscribeToDocuments((docs) => {
       setDocuments(docs);
-      setLoading(false); // Set loading to false once we have live data
+      if (loading) setLoading(false); // Set loading to false once we have live data
     });
     
     // Fetch settings for export once
     getSettings().then(setSettingsForExport);
+
+    // Initial loading is complete because we have props from the server
+    if(initialDocuments.length > 0) {
+      setLoading(false);
+    }
 
     // Cleanup subscription on component unmount
     return () => unsubscribe();
@@ -185,7 +190,7 @@ export function DocumentList({ initialDocuments }: DocumentListProps) {
           </div>
         </CardHeader>
         <CardContent>
-          {loading && documents.length === 0 ? (
+          {loading ? (
               <div className="flex justify-center items-center py-8">
                   <Loader2 className="h-8 w-8 animate-spin" />
               </div>
