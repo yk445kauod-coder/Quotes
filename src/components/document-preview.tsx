@@ -180,7 +180,7 @@ export function DocumentPreview({ formData, settings: propSettings, columnVisibi
                           <td className="border p-1 font-bold cell-center">
                             <span>{formatTextWithHindiNumerals('الضريبة')}</span>
                             <span>&nbsp;</span>
-                            <span dir="ltr">{formatTextWithHindiNumerals('14%')}</span>
+                            <span dir="ltr">{formatNumberToHindi(14)}%</span>
                           </td>
                           <td className="border p-1 cell-center">{formatCurrency(taxAmount)}</td>
                       </tr>
