@@ -138,13 +138,14 @@ export async function exportToPdf(element: HTMLElement, fileName: string) {
 
     const pages = element.querySelectorAll<HTMLElement>('.a4-page');
     const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
+    // A4 height is not used directly for scaling to avoid distortion, but good to have
+    // const pdfHeight = pdf.internal.pageSize.getHeight();
 
     for (let i = 0; i < pages.length; i++) {
         const page = pages[i];
         
         const canvas = await html2canvas(page, {
-            scale: 4, // High resolution capture
+            scale: 2, // A scale of 2 is a good balance of quality and performance
             useCORS: true,
             logging: false,
             allowTaint: true,
@@ -152,30 +153,20 @@ export async function exportToPdf(element: HTMLElement, fileName: string) {
 
         const imgData = canvas.toDataURL('image/jpeg', 0.98); // High quality JPEG
         
-        // Calculate the aspect ratio to fit the image correctly onto the A4 page
+        // Calculate the aspect ratio of the captured image
         const imgProps = pdf.getImageProperties(imgData);
         const aspectRatio = imgProps.width / imgProps.height;
         
-        let finalWidth = pdfWidth;
-        let finalHeight = finalWidth / aspectRatio;
-
-        // If the calculated height exceeds the page height, adjust based on height instead
-        // This maintains the aspect ratio while ensuring the entire image fits.
-        if (finalHeight > pdfHeight) {
-            finalHeight = pdfHeight;
-            finalWidth = finalHeight * aspectRatio;
-        }
+        // Calculate the height of the image in the PDF to maintain aspect ratio
+        const finalHeight = pdfWidth / aspectRatio;
 
         if (i > 0) {
             pdf.addPage();
         }
         
-        // Center the image on the page if it's smaller than the page
-        const xOffset = (pdfWidth - finalWidth) / 2;
-        const yOffset = (pdfHeight - finalHeight) / 2;
-        
-        // Add the image to the PDF, letting jsPDF handle scaling to fit the page.
-        pdf.addImage(imgData, 'JPEG', xOffset, yOffset, finalWidth, finalHeight);
+        // Add the image to the PDF.
+        // It will be scaled to fit the full width of the page, and the height will adjust accordingly.
+        pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, finalHeight);
     }
 
     pdf.save(`${fileName}.pdf`);
