@@ -1,6 +1,8 @@
 
 "use client";
 import type { DocumentItem } from "./types";
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 /**
  * Converts an array of items to a CSV string.
@@ -115,4 +117,64 @@ export function exportToExcel(items: DocumentItem[], fileName: string) {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(link.href);
+}
+
+
+/**
+ * Exports a given HTML element to a PDF file with high fidelity.
+ * @param element The HTML element to capture.
+ * @param fileName The name for the downloaded PDF file.
+ */
+export async function exportToPdf(element: HTMLElement, fileName: string) {
+    if (!element) {
+        throw new Error("Element to export not found.");
+    }
+    
+    // 1. Use html2canvas to capture the element with high resolution
+    const canvas = await html2canvas(element, {
+        scale: 4, // Higher scale for better quality
+        useCORS: true,
+        logging: false,
+        allowTaint: true,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: element.scrollWidth,
+        windowHeight: element.scrollHeight,
+    });
+
+    const imgData = canvas.toDataURL('image/jpeg', 0.98); // Use JPEG for smaller size with high quality
+
+    // 2. Use jsPDF to create the PDF document
+    const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+    });
+
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+    const canvasWidth = canvas.width;
+    const canvasHeight = canvas.height;
+    const canvasAspectRatio = canvasWidth / canvasHeight;
+    const pageAspectRatio = pdfWidth / pdfHeight;
+
+    let imgWidth = pdfWidth;
+    let imgHeight = pdfWidth / canvasAspectRatio;
+
+    // Handle multi-page content
+    let heightLeft = imgHeight;
+    let position = 0;
+
+    pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
+    heightLeft -= pdfHeight;
+
+    while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
+    }
+
+    // 3. Save the PDF
+    pdf.save(`${fileName}.pdf`);
 }

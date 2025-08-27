@@ -48,13 +48,12 @@ import { formatCurrency } from "@/lib/utils";
 import type { DocumentData, SettingsData } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import React, { useState, useEffect } from "react";
-import { exportToWord, exportToExcel } from "@/lib/export";
+import { exportToWord, exportToExcel, exportToPdf } from "@/lib/export";
 import { Textarea } from "./ui/textarea";
 import { useLoading } from "@/context/loading-context";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import { Switch } from "./ui/switch";
 import { Label } from "./ui/label";
-import html2pdf from "html2pdf.js";
 
 
 const formSchema = z.object({
@@ -271,26 +270,8 @@ export function CreateDocumentForm({ existingDocument, defaultSettings }: Create
         return;
     }
 
-    const options = {
-        margin: [10, 15, 15, 15], // [top, left, bottom, right] in mm
-        filename: `${docId}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-          scale: 4, // Higher scale for better quality
-          logging: false, 
-          useCORS: true,
-          scrollX: 0,
-          scrollY: 0,
-          windowWidth: element.scrollWidth,
-          windowHeight: element.scrollHeight,
-        },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        // This helps with page breaks
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-    };
-
     try {
-        await html2pdf().from(element).set(options).save();
+        await exportToPdf(element, docId);
         toast({
             title: "تم التصدير بنجاح",
             description: `جاري تحميل ملف ${docId}.pdf`,

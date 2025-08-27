@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
@@ -119,12 +120,12 @@ export function DocumentList({ initialDocuments }: DocumentListProps) {
 
   const handleExport = async (doc: DocumentData, format: 'pdf' | 'word' | 'excel') => {
     setExportingDocId(doc.id);
+    showLoading();
     
     try {
         if (format === 'excel') {
             exportToExcel(doc.items, doc.docId);
             toast({ title: "تم التصدير", description: `تم تصدير المستند كـ ${format.toUpperCase()}.` });
-            setExportingDocId(null);
             return;
         }
 
@@ -151,6 +152,7 @@ export function DocumentList({ initialDocuments }: DocumentListProps) {
     } finally {
         setExportingDocId(null);
         setDocToExport(null); // Clean up the hidden preview
+        hideLoading();
     }
   };
 
