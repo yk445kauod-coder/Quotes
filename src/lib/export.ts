@@ -20,7 +20,7 @@ function convertToCSV(items: DocumentItem[]): string {
 /**
  * Exports a given HTML element to a Word (.doc) file by wrapping it in the necessary HTML structure.
  * @param element The HTML element to export.
- * @param fileName The desired name of the output file.
+ *param fileName The desired name of the output file.
  */
 export async function exportToWord(element: HTMLElement, fileName:string) {
     if (!element) {
@@ -151,15 +151,16 @@ export async function exportToPdf(element: HTMLElement, fileName: string) {
         });
 
         const imgData = canvas.toDataURL('image/jpeg', 0.98); // High quality JPEG
-        const imgProps = pdf.getImageProperties(imgData);
-
+        
         // Calculate the aspect ratio to fit the image correctly onto the A4 page
+        const imgProps = pdf.getImageProperties(imgData);
         const aspectRatio = imgProps.width / imgProps.height;
+        
         let finalWidth = pdfWidth;
         let finalHeight = finalWidth / aspectRatio;
 
-        // If the calculated height is greater than the page height, it means the content is taller than it is wide,
-        // so we should base the final dimensions on the page height instead.
+        // If the calculated height exceeds the page height, adjust based on height instead
+        // This maintains the aspect ratio while ensuring the entire image fits.
         if (finalHeight > pdfHeight) {
             finalHeight = pdfHeight;
             finalWidth = finalHeight * aspectRatio;
@@ -169,8 +170,12 @@ export async function exportToPdf(element: HTMLElement, fileName: string) {
             pdf.addPage();
         }
         
+        // Center the image on the page if it's smaller than the page
+        const xOffset = (pdfWidth - finalWidth) / 2;
+        const yOffset = (pdfHeight - finalHeight) / 2;
+        
         // Add the image to the PDF, letting jsPDF handle scaling to fit the page.
-        pdf.addImage(imgData, 'JPEG', 0, 0, finalWidth, finalHeight);
+        pdf.addImage(imgData, 'JPEG', xOffset, yOffset, finalWidth, finalHeight);
     }
 
     pdf.save(`${fileName}.pdf`);
