@@ -7,9 +7,9 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 
-export const CalculatorInputSchema = z.string().describe("A natural language query describing a calculation.");
+const CalculatorInputSchema = z.string().describe("A natural language query describing a calculation.");
 
-export const CalculatorOutputSchema = z.object({
+const CalculatorOutputSchema = z.object({
   expression: z.string().describe("The mathematical expression derived from the query, e.g., '5 * 50'."),
   result: z.number().describe("The numerical result of the expression."),
 });
